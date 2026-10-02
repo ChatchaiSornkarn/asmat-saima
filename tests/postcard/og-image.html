@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- Link-preview composition (1200×630). Rendered to assets/og-image.jpg by render-assets.py; not part of the site. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Pinyon+Script&display=swap">
+<style>
+  html, body { margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    background:
+      radial-gradient(ellipse 60% 70% at 62% 48%, rgba(255, 250, 238, .55), transparent 70%),
+      radial-gradient(ellipse 120% 110% at 50% 50%, transparent 60%, rgba(214, 196, 160, .55) 100%),
+      #eee4d0;
+    font-family: 'Cinzel', serif; color: #86652a;
+  }
+  .art { position: absolute; display: block; }
+  .tl { left: 0; top: 0; width: 250px; }
+  .br { right: 0; bottom: 0; width: 230px; }
+  .l1 { right: 92px; top: -70px; width: 58px; }
+  .l2 { right: 34px; top: -70px; width: 56px; }
+  svg.frame { position: absolute; inset: 0; }
+  .couple { left: 228px; bottom: 34px; width: 280px; }
+  .text { position: absolute; left: 560px; right: 70px; top: 118px; text-align: center; }
+  .inv { font-size: 18px; letter-spacing: .2em; font-weight: 500; }
+  .nikah { font-size: 60px; letter-spacing: .16em; font-weight: 600; color: #8a6528; margin: 8px 0 0; }
+  .of { font-family: 'Pinyon Script', cursive; font-size: 54px; line-height: 1; margin-top: 6px; color: #8a6528; }
+  .names { font-family: 'Pinyon Script', cursive; font-size: 84px; line-height: 1.15; white-space: nowrap; color: #93692a;
+    background: linear-gradient(172deg, #b18a41 0%, #8c6524 38%, #b48c45 56%, #7f5a1e 78%, #a07a35 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; padding: 0 .2em; }
+  .rings { display: inline-block; width: 66px; vertical-align: middle; margin: 0 .12em; }
+  .date { font-size: 23px; letter-spacing: .2em; color: #6a5527; margin-top: 16px; font-weight: 500; }
+  .place { font-size: 18px; letter-spacing: .22em; color: #57523d; margin-top: 12px; }
+  .rule { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
+  .rule i { display: block; width: 110px; height: 1.4px; background: #a67c38; }
+  .rule b { width: 9px; height: 9px; transform: rotate(45deg); border: 1.4px solid #a67c38; }
+</style>
+</head>
+<body>
+  <svg class="frame" width="1200" height="630" viewBox="0 0 1200 630"><path id="arch" fill="none" stroke="#a67c38" stroke-width="2"/></svg>
+  <img class="art tl" src="../../assets/art/roses-top-left.webp" alt="">
+  <img class="art br" src="../../assets/art/roses-bottom-right.webp" alt="">
+  <img class="art l1" src="../../assets/art/lantern-1.webp" alt="">
+  <img class="art l2" src="../../assets/art/lantern-2.webp" alt="">
+  <img class="art couple" src="../../assets/art/couple.webp" alt="">
+  <div class="text">
+    <div class="inv">YOU ARE WARMLY INVITED TO THE</div>
+    <div class="nikah">NIKAH</div>
+    <div class="rule"><i></i><b></b><i></i></div>
+    <div class="of">of</div>
+    <div class="names">Asmat<span class="rings" id="rings"></span>Saima</div>
+    <div class="date">SUNDAY, 6 DECEMBER 2026</div>
+    <div class="place">GÖTEBORG</div>
+  </div>
+  <script type="module">
+    import { archPath } from '../../src/art/arch.js';
+    import { rings } from '../../src/art/ornaments.js';
+    // arch around the couple
+    document.getElementById('arch').setAttribute('d', archPath(400, 560, { x: 168, y: 40 }));
+    const r = document.getElementById('rings');
+    r.innerHTML = rings('og');
+    r.style.cssText += ';--pc-foil-hi:#c9a560;--pc-foil:#9c7430;--pc-foil-lo:#7a5520;--pc-gem-hi:#f7ecd3;--pc-gem-lo:#dcc28c;--pc-paper-flat:#eee4d0';
+    r.querySelector('svg').style.cssText = 'display:block;width:100%;height:auto;overflow:visible';
+    document.fonts.ready.then(() => document.body.dataset.ready = '1');
+  </script>
+</body>
+</html>

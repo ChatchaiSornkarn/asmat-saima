@@ -1,0 +1,99 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — the single source of colour, type, spacing and motion.
+   Every other stylesheet uses these variables; never hard-code a colour.
+   Palette sampled from requirements/references/invite_postcard.png
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Paper */
+  --cream:        #f3ead9;   /* postcard ground */
+  --cream-deep:   #ebdfc8;   /* shaded paper, inputs */
+  --paper:        #faf5ea;   /* lightest — cards, highlights */
+  --vellum:       rgba(250, 245, 234, 0.72); /* translucent panels */
+
+  /* Gold line-art */
+  --gold:         #a8843c;   /* primary line + text accent */
+  --gold-deep:    #85662a;   /* text on cream (AA contrast) */
+  --gold-light:   #c9a961;   /* highlights, hover */
+  --gold-pale:    #e2cf9f;   /* hairlines on cream */
+  --gold-grad:    linear-gradient(135deg, #c9a961 0%, #a8843c 45%, #d8bd7a 60%, #85662a 100%);
+
+  /* Ink */
+  --ink:          #4a3b22;   /* body text (warm brown) */
+  --ink-soft:     #6e5c3d;   /* secondary text */
+  --ink-faint:    #9a8a6c;   /* placeholders, hints */
+
+  /* Accents from the illustration */
+  --navy:         #1f2b47;   /* couple's attire — used sparingly */
+  --navy-soft:    #33405f;
+  --sage:         #8d9b7e;   /* leaves */
+  --sage-deep:    #5f6e52;
+  --rose:         #fbf6ee;   /* white roses */
+  --danger:       #9b3b2f;   /* errors (muted terracotta) */
+  --success:      #5f6e52;
+
+  /* Type */
+  --font-script:  'Pinyon Script', 'Great Vibes', cursive;
+  --font-display: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+  --font-serif:   'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-ui:      'Cormorant Garamond', Georgia, serif;
+  --tracking-caps: 0.22em;
+
+  /* Fluid type scale */
+  --fs-xs:   clamp(0.78rem, 0.74rem + 0.2vw, 0.86rem);
+  --fs-sm:   clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+  --fs-md:   clamp(1.05rem, 0.98rem + 0.35vw, 1.2rem);
+  --fs-lg:   clamp(1.3rem, 1.15rem + 0.7vw, 1.65rem);
+  --fs-xl:   clamp(1.8rem, 1.5rem + 1.5vw, 2.6rem);
+  --fs-2xl:  clamp(2.6rem, 2rem + 3vw, 4.2rem);
+  --fs-names: clamp(3rem, 2.2rem + 5vw, 5.6rem);
+
+  /* Space (4px base) */
+  --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 0.75rem; --s-4: 1rem;
+  --s-5: 1.5rem;  --s-6: 2rem;   --s-7: 3rem;    --s-8: 4rem; --s-9: 6rem;
+
+  /* Shape & depth */
+  --radius-sm: 6px;
+  --radius:    12px;
+  --radius-lg: 20px;
+  --hairline:  1px solid var(--gold-pale);
+  --line:      1px solid var(--gold);
+  --shadow-sm: 0 1px 2px rgba(74, 59, 34, 0.08), 0 2px 8px rgba(74, 59, 34, 0.06);
+  --shadow:    0 2px 6px rgba(74, 59, 34, 0.08), 0 12px 32px rgba(74, 59, 34, 0.10);
+  --shadow-lg: 0 8px 24px rgba(74, 59, 34, 0.12), 0 32px 80px rgba(74, 59, 34, 0.16);
+  --focus-ring: 0 0 0 3px rgba(168, 132, 60, 0.35);
+
+  /* Motion */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-door:   cubic-bezier(0.6, 0.02, 0.2, 1);
+  --dur-fast: 160ms; --dur: 320ms; --dur-slow: 700ms;
+
+  /* Layout */
+  --content-max: 1200px;
+  --card-max:    520px;   /* postcard max width on desktop */
+  --panel-max:   560px;   /* RSVP column */
+  --gutter: max(16px, env(safe-area-inset-left, 0px));
+
+  /* Z layers */
+  --z-content: 1; --z-sticky: 50; --z-switcher: 900; --z-opening: 1000; --z-toast: 1100;
+
+  color-scheme: light;
+}
+
+/* Script-specific font stacks (fonts load lazily; see src/i18n/index.js) */
+:root:lang(th) {
+  --font-serif:   'Noto Serif Thai', 'Cormorant Garamond', serif;
+  --font-ui:      'Noto Serif Thai', 'Cormorant Garamond', serif;
+  --font-display: 'Noto Serif Thai', 'Cinzel', serif;
+  --tracking-caps: 0.04em;
+}
+:root:lang(ur) {
+  --font-serif:   'Noto Nastaliq Urdu', 'Noto Naskh Arabic', 'Cormorant Garamond', serif;
+  --font-ui:      'Noto Naskh Arabic', 'Noto Nastaliq Urdu', 'Cormorant Garamond', serif;
+  --font-display: 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', serif;
+  --tracking-caps: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 1ms; --dur: 1ms; --dur-slow: 1ms; }
+}

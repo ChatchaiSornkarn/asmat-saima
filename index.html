@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Asmat &amp; Saima · Nikah · 6 December 2026</title>
+  <meta name="description" content="You are warmly invited to the Nikah of Asmat &amp; Saima — Sunday, 6 December 2026, Göteborg.">
+  <meta name="theme-color" content="#f3ead9">
+  <meta name="color-scheme" content="light">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Link previews (WhatsApp, iMessage, Messenger…) — absolute URLs required -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Asmat &amp; Saima · Nikah">
+  <meta property="og:description" content="Sunday, 6 December 2026 · Göteborg — tap to open your invitation.">
+  <meta property="og:url" content="https://chatchaisornkarn.github.io/asmat-saima/">
+  <meta property="og:image" content="https://chatchaisornkarn.github.io/asmat-saima/assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Nikah invitation card for Asmat &amp; Saima — Sunday, 6 December 2026, Göteborg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+  <!-- Language/direction before first paint (full logic lives in src/i18n/index.js) -->
+  <script>
+    (function () {
+      var supported = ['en', 'sv', 'th', 'ur'], pick = null;
+      try { var q = new URLSearchParams(location.search).get('lang'); if (q && supported.indexOf(q) > -1) pick = q; } catch (e) {}
+      if (!pick) {
+        var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+        for (var i = 0; i < list.length && !pick; i++) {
+          var base = String(list[i]).toLowerCase().split('-')[0];
+          if (base === 'nb' || base === 'no' || base === 'da') base = null; // keep EN for other Nordics
+          if (base && supported.indexOf(base) > -1) pick = base;
+        }
+      }
+      pick = pick || 'en';
+      var h = document.documentElement;
+      h.lang = pick; h.dir = pick === 'ur' ? 'rtl' : 'ltr';
+      h.className = h.className.replace('no-js', 'js');
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&display=swap">
+
+  <link rel="stylesheet" href="src/styles/tokens.css">
+  <link rel="stylesheet" href="src/styles/base.css">
+  <link rel="stylesheet" href="src/styles/switcher.css">
+  <link rel="stylesheet" href="src/styles/postcard.css">
+  <link rel="stylesheet" href="src/styles/opening.css">
+  <link rel="stylesheet" href="src/styles/sections.css">
+  <link rel="stylesheet" href="src/styles/rsvp.css">
+
+  <link rel="modulepreload" href="config.js">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#rsvp" data-i18n="cue.aria">Scroll down to reply</a>
+
+  <!-- Language switcher: always visible, usable while the doors are closed -->
+  <nav id="lang-switcher" class="lang-switcher" aria-label="Language"></nav>
+
+  <!-- Opening animation (envelope → arched doors) overlays everything until opened -->
+  <div id="opening" class="opening" role="dialog" aria-modal="true" aria-labelledby="opening-title"></div>
+
+  <main id="site" class="site">
+    <div class="site__layout">
+      <div class="site__card">
+        <section id="postcard" class="postcard-section" aria-labelledby="postcard-title"></section>
+        <div id="rsvp-cue" class="rsvp-cue"></div>
+      </div>
+      <div class="site__panel">
+        <section id="actions" class="actions" aria-labelledby="actions-title"></section>
+        <section id="rsvp" class="rsvp" aria-labelledby="rsvp-title" tabindex="-1"></section>
+      </div>
+    </div>
+    <footer id="footer" class="footer"></footer>
+  </main>
+
+  <noscript>
+    <div class="noscript">
+      <p>You are warmly invited to the Nikah of <strong>Asmat &amp; Saima</strong>.</p>
+      <p>Sunday, 6 December 2026 · Säve Flygplatsväg 26, Göteborg</p>
+      <p>Please enable JavaScript to reply.</p>
+    </div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,508 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Sections owned by src/layout.js: actions (Directions / Add to calendar),
+   the calendar popover / bottom sheet, the RSVP cue, the footer, and the
+   shared `.reveal--rise` entrance. Logical properties throughout (Urdu RTL).
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Shared ornaments ─────────────────────────────────────────────────── */
+.rosette { display: block; inline-size: 100%; block-size: 100%; color: var(--gold); }
+.rosette__fill path { fill: var(--paper); stroke: none; }
+.rosette__line path, .rosette__line circle {
+  fill: none; stroke: currentColor; stroke-width: 0.9; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.rosette__dot { fill: currentColor; }
+.icon { inline-size: 100%; block-size: 100%; }
+[dir="rtl"] .icon--chevron,
+[dir="rtl"] .icon--external { transform: scaleX(-1); }
+
+/* Small tracked-caps label flanked by tapered hairlines and rosettes:  ——✿ SAVE THE DATE ✿—— */
+.ornate-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-block-end: var(--s-5);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.ornate-label__text { flex: none; padding-inline-start: var(--tracking-caps); /* optically centre tracked caps */ }
+.ornate-label__rosette { flex: none; inline-size: 1.2rem; block-size: 1.2rem; }
+.ornate-label__rosette--lg { inline-size: 1.75rem; block-size: 1.75rem; }
+.ornate-label__rule {
+  flex: 0 1 4.5rem;
+  min-inline-size: 1.25rem;
+  block-size: 1.5px;
+  background: var(--gold);
+  opacity: 0.85;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);   /* thin at the outer end */
+}
+.ornate-label__rule:last-child { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+[dir="rtl"] .ornate-label__rule:first-child { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+[dir="rtl"] .ornate-label__rule:last-child { clip-path: polygon(0 50%, 100% 0, 100% 100%); }
+html:lang(th) .ornate-label, html:lang(ur) .ornate-label { text-transform: none; font-size: var(--fs-sm); letter-spacing: 0; }
+html:lang(th) .ornate-label__text, html:lang(ur) .ornate-label__text { padding-inline-start: 0; }
+html:lang(ur) .ornate-label { line-height: 2; }
+
+/* ── Actions ──────────────────────────────────────────────────────────── */
+.actions { position: relative; }
+.actions__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.75rem, 0.4rem + 1.6vw, 1.25rem);
+  list-style: none;
+  padding: 0;
+}
+.actions__list > li { display: flex; min-inline-size: 0; }
+
+/* Arched stationery tiles: a soft doorway top, an engraved inner hairline. */
+.action-tile {
+  --tile-arch: clamp(2.6rem, 2rem + 2.4vw, 3.4rem);
+  --tile-inset: 5px;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;     /* icons and titles line up across tiles even when one title wraps */
+  gap: 0.3rem;
+  inline-size: 100%;
+  min-block-size: 10.75rem;
+  padding: calc(var(--tile-arch) * 0.78) 0.75rem 1.35rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--paper) 0%, color-mix(in srgb, var(--paper) 72%, transparent) 70%);
+  border: 1px solid var(--hairline-gold);
+  border-radius: 50% 50% var(--radius-sm) var(--radius-sm) / var(--tile-arch) var(--tile-arch) var(--radius-sm) var(--radius-sm);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--paper) 80%, transparent) inset, var(--shadow-sm);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+.action-tile::before {             /* engraved inner hairline */
+  content: "";
+  position: absolute;
+  inset: var(--tile-inset);
+  z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--gold-pale) 85%, transparent);
+  border-radius: 50% 50% 3px 3px / calc(var(--tile-arch) - var(--tile-inset)) calc(var(--tile-arch) - var(--tile-inset)) 3px 3px;
+  pointer-events: none;
+  transition: border-color var(--dur-fast) ease;
+}
+.action-tile::after {              /* tiny finial at the crown of the arch */
+  content: "";
+  position: absolute;
+  inset-block-start: calc(var(--tile-inset) + 0.55rem);
+  inset-inline-start: 50%;
+  inline-size: 5px;
+  block-size: 5px;
+  translate: -50% 0;
+  rotate: 45deg;
+  border: 1px solid var(--gold);
+  opacity: 0.75;
+}
+[dir="rtl"] .action-tile::after { translate: 50% 0; }
+.action-tile__icon {
+  inline-size: 1.85rem;
+  block-size: 1.85rem;
+  margin-block-end: 0.4rem;
+  color: var(--gold);
+  transition: transform var(--dur) var(--ease-out), color var(--dur-fast) ease;
+}
+.action-tile__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+  padding-inline-start: 0.14em;    /* optical centring of tracked caps */
+}
+.action-tile__sub {
+  font-family: var(--font-serif);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+html:lang(th) .action-tile__title, html:lang(ur) .action-tile__title {
+  text-transform: none; letter-spacing: 0; padding-inline-start: 0; font-size: var(--fs-md);
+}
+html:lang(th) .action-tile__sub, html:lang(ur) .action-tile__sub { font-style: normal; }
+html:lang(ur) .action-tile { gap: 0; }
+html:lang(ur) .action-tile__title, html:lang(ur) .action-tile__sub { line-height: 1.9; }
+
+@media (hover: hover) {
+  .action-tile:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--paper) 80%, transparent) inset, var(--shadow);
+  }
+  .action-tile:hover::before { border-color: color-mix(in srgb, var(--gold) 45%, var(--gold-pale)); }
+  .action-tile:hover .action-tile__icon { transform: translateY(-2px); color: var(--gold-deep); }
+}
+.action-tile:active { transform: translateY(0); box-shadow: var(--shadow-sm); transition-duration: var(--dur-fast); }
+.action-tile[aria-expanded="true"] { border-color: var(--gold); background-color: var(--paper); }
+.action-tile:focus-visible {
+  outline: 1.5px solid var(--gold-deep);
+  outline-offset: 3px;
+  border-radius: 50% 50% var(--radius-sm) var(--radius-sm) / var(--tile-arch) var(--tile-arch) var(--radius-sm) var(--radius-sm);
+  box-shadow: var(--focus-ring), var(--shadow-sm);
+}
+
+@media (max-width: 359.98px) {
+  .actions__list { grid-template-columns: minmax(0, 1fr); }
+  .action-tile { min-block-size: 9.5rem; }
+}
+
+/* ── Calendar dialog: anchored popover (≥ 640px) / bottom sheet (phones) ─ */
+.cal-dialog {
+  position: fixed;
+  margin: 0;
+  inset: auto;
+  inline-size: min(22.5rem, calc(100vw - 24px));
+  overflow: visible;
+  color: var(--ink);
+}
+.cal-dialog:not([open]) { display: none; }
+.cal-dialog::backdrop { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+.cal-dialog__panel {
+  position: relative;
+  z-index: 1;
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  background-color: var(--paper);
+  background-image: radial-gradient(120% 60% at 50% 0%, var(--rose) 0%, transparent 70%);
+  border: 1px solid var(--hairline-gold);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.cal-dialog__panel::before {        /* engraved inner hairline, like the tiles */
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid color-mix(in srgb, var(--gold-pale) 70%, transparent);
+  border-radius: calc(var(--radius) - 5px);
+  pointer-events: none;
+}
+.cal-dialog__panel:focus, .cal-dialog__panel:focus-visible { outline: none; box-shadow: var(--shadow-lg); }
+.cal-dialog.is-sheet .cal-dialog__panel:focus { box-shadow: 0 -10px 40px color-mix(in srgb, var(--ink) 18%, transparent); }
+.cal-dialog__handle { display: none; }
+
+.cal-dialog__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-inline-start: var(--s-2);
+}
+.cal-dialog__rosette { flex: none; inline-size: 1rem; block-size: 1rem; }
+.cal-dialog__title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+html:lang(th) .cal-dialog__title, html:lang(ur) .cal-dialog__title { text-transform: none; letter-spacing: 0; font-size: var(--fs-md); }
+.cal-dialog__close {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  margin-inline-end: calc(-1 * var(--s-2));
+  border-radius: 50%;
+  color: var(--gold-deep);
+  transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.cal-dialog__close .icon { inline-size: 20px; block-size: 20px; }
+.cal-dialog__close:hover { background-color: color-mix(in srgb, var(--cream-deep) 60%, transparent); color: var(--ink); }
+.cal-dialog__close:focus-visible { border-radius: 50%; }
+
+.cal-dialog__when {
+  margin-block: 0 var(--s-3);
+  padding-inline-start: calc(var(--s-2) + 1rem + 0.6rem);   /* aligns under the title */
+  font-size: var(--fs-sm);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+html:lang(th) .cal-dialog__when, html:lang(ur) .cal-dialog__when { font-style: normal; }
+html:lang(ur) .cal-dialog__when { line-height: 1.9; }
+
+.cal-dialog__options { list-style: none; padding: 0; border-block-start: var(--hairline); }
+.cal-dialog__options > li + li { border-block-start: var(--hairline); }
+.cal-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  inline-size: 100%;
+  min-block-size: 4rem;
+  padding: var(--s-3) var(--s-2);
+  text-align: start;
+  text-decoration: none;
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) ease;
+}
+.cal-option:hover { background-color: color-mix(in srgb, var(--cream) 70%, transparent); color: var(--ink); }
+.cal-option:focus-visible { outline-offset: -2px; border-radius: var(--radius-sm); background-color: color-mix(in srgb, var(--cream) 70%, transparent); }
+.cal-option__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  padding: 0.55rem;
+  color: var(--gold);
+  border: 1px solid var(--gold-pale);
+  border-radius: 50% 50% 4px 4px / 1.15rem 1.15rem 4px 4px;   /* the tiles' doorway, in miniature */
+  background: var(--paper);
+}
+.cal-option__text { flex: 1; display: grid; gap: 0.05rem; min-inline-size: 0; }
+.cal-option__title { font-size: var(--fs-md); font-weight: 600; line-height: 1.25; }
+.cal-option__sub { font-size: var(--fs-sm); line-height: 1.3; color: var(--ink-soft); }
+html:lang(ur) .cal-option__title, html:lang(ur) .cal-option__sub { line-height: 1.9; }
+/* Brand names stay Latin ("Apple Calendar / Outlook"); the Urdu fonts have no Latin glyphs, so give
+   them Cormorant instead of the browser's Times fallback. */
+html:lang(ur) .cal-option__title { font-family: 'Noto Naskh Arabic', 'Cormorant Garamond', serif; font-weight: 500; }
+.cal-option__end { flex: none; inline-size: 1.15rem; block-size: 1.15rem; color: var(--gold); transition: transform var(--dur-fast) var(--ease-out); }
+.cal-option:hover .cal-option__end { transform: translateX(2px); }
+[dir="rtl"] .cal-option:hover .cal-option__end { transform: translateX(-2px); }
+
+/* Caret pointing at the button (popover only) */
+.cal-dialog__caret {
+  position: absolute;
+  inset-block-start: -6px;
+  left: var(--caret-x, 50%);
+  z-index: 2;
+  inline-size: 12px;
+  block-size: 12px;
+  margin-left: -6px;
+  background: var(--paper);
+  border: 1px solid var(--hairline-gold);
+  border-right: 0;   /* physical on purpose: the caret is positioned in physical px from JS */
+  border-bottom: 0;
+  transform: rotate(45deg);
+}
+.cal-dialog.is-above .cal-dialog__caret { inset-block-start: auto; inset-block-end: -6px; transform: rotate(225deg); }
+.cal-dialog.is-sheet .cal-dialog__caret { display: none; }
+
+/* Popover motion */
+@media (prefers-reduced-motion: no-preference) {
+  .cal-dialog.is-popover[open] { animation: pop-in 260ms var(--ease-out); transform-origin: var(--caret-x, 50%) 0; }
+  .cal-dialog.is-popover.is-above[open] { transform-origin: var(--caret-x, 50%) 100%; }
+  .cal-dialog.is-popover.is-closing { animation: pop-out 180ms ease-in forwards; }
+  .cal-dialog.is-popover.is-closing .cal-dialog__panel { animation: fade-out 180ms ease-in forwards; }
+}
+@keyframes pop-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+@keyframes pop-out { to { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@keyframes fade-out { to { opacity: 0; } }
+
+/* Bottom sheet (phones) */
+@media (max-width: 639.98px) {
+  .cal-dialog.is-sheet {
+    inset: auto 0 0 0;
+    inline-size: 100%;
+    max-inline-size: 34rem;
+    margin-inline: auto;
+  }
+  .cal-dialog.is-sheet::backdrop {
+    background: color-mix(in srgb, var(--ink) 38%, transparent);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .cal-dialog.is-sheet .cal-dialog__panel {
+    padding: var(--s-2) max(var(--s-5), env(safe-area-inset-right, 0px)) calc(var(--s-4) + env(safe-area-inset-bottom, 0px)) max(var(--s-5), env(safe-area-inset-left, 0px));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-block-end: 0;
+    box-shadow: 0 -10px 40px color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+  .cal-dialog.is-sheet .cal-dialog__panel::before {
+    inset: 5px 5px 0;
+    border-block-end: 0;
+    border-radius: calc(var(--radius-lg) - 5px) calc(var(--radius-lg) - 5px) 0 0;
+  }
+  .cal-dialog.is-sheet .cal-dialog__handle {
+    display: block;
+    inline-size: 2.5rem;
+    block-size: 4px;
+    margin: var(--s-1) auto var(--s-3);
+    border-radius: 2px;
+    background: var(--gold-pale);
+  }
+  .cal-dialog.is-sheet .cal-option { min-block-size: 4.5rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .cal-dialog.is-sheet[open] .cal-dialog__panel { animation: sheet-in 380ms var(--ease-out); }
+    .cal-dialog.is-sheet[open]::backdrop { animation: backdrop-in 380ms ease-out; }
+    .cal-dialog.is-sheet.is-closing .cal-dialog__panel { animation: sheet-out 240ms var(--ease-in-out) forwards; }
+    .cal-dialog.is-sheet.is-closing::backdrop { animation: backdrop-out 240ms ease-in forwards; }
+  }
+}
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes sheet-out { to { transform: translateY(100%); } }
+@keyframes backdrop-in { from { opacity: 0; } }
+@keyframes backdrop-out { to { opacity: 0; } }
+
+/* ── RSVP cue (phones / tablets) ──────────────────────────────────────── */
+.rsvp-cue {
+  position: sticky;                 /* stays on the first screen even if the postcard runs long */
+  inset-block-end: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  inline-size: 100%;
+  padding-block: var(--s-2) calc(var(--s-3) + env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out), visibility 0s linear 700ms;
+  visibility: hidden;
+}
+html.is-open .rsvp-cue {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 900ms var(--ease-out) 1.4s, visibility 0s;
+}
+html.is-open .rsvp-cue.is-faded:not(:focus-within) {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 450ms ease, visibility 0s linear 450ms;
+}
+.rsvp-cue__link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-block-size: 44px;
+  min-inline-size: 72px;
+  padding: var(--s-2) var(--s-4) var(--s-1);
+  border-radius: var(--radius);
+  color: var(--gold-text);
+  text-decoration: none;
+}
+.rsvp-cue__link:hover { color: var(--ink); }
+.rsvp-cue__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.32em;
+  padding-inline-start: 0.32em;
+}
+html:lang(th) .rsvp-cue__label, html:lang(ur) .rsvp-cue__label { letter-spacing: 0.08em; padding-inline-start: 0; }
+.rsvp-cue__icon { display: block; inline-size: 1.15rem; block-size: 1.55rem; color: var(--gold); }
+.rsvp-cue__chevrons { inline-size: 100%; block-size: 100%; }
+.rsvp-cue__c2 { opacity: 0.5; }
+@media (prefers-reduced-motion: no-preference) {
+  html.is-open .rsvp-cue__icon { animation: cue-bob 2.6s var(--ease-in-out) 2.2s infinite; }
+  html.is-open .rsvp-cue__c2 { animation: cue-glint 2.6s var(--ease-in-out) 2.2s infinite; }
+}
+@keyframes cue-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@keyframes cue-glint { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.95; } }
+
+/* Two columns: the RSVP sits beside the card, so the cue has nothing to point at. */
+@media (min-width: 1000px) {
+  .rsvp-cue { display: none; }
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.footer {
+  position: relative;
+  padding-block: clamp(var(--s-7), 8vw, var(--s-9)) calc(var(--s-7) + env(safe-area-inset-bottom, 0px));
+  padding-inline: var(--site-pad-inline);
+  text-align: center;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--cream-deep) 55%, transparent));
+}
+.footer__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-inline-size: 36rem;
+  margin-inline: auto;
+}
+.footer__divider { inline-size: min(19rem, 80%); gap: 0.8rem; margin-block-end: var(--s-5); }
+.footer__divider .ornate-label__rule { flex: 1 1 0; }
+.footer__signoff {
+  font-size: var(--fs-md);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.footer__names {
+  margin-block: 0.1em 0.2em;
+  padding-inline: 0.2em;           /* room for script swashes */
+  font-family: var(--font-script);
+  font-size: clamp(2.6rem, 2rem + 3vw, 3.6rem);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--gold-deep);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .footer__names {
+    background: var(--gold-foil);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+.footer__dua {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: var(--tracking-caps);
+  padding-inline-start: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.footer__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block-start: var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;       /* Cinzel is all-caps: match the postcard's date line */
+  color: var(--ink-soft);
+}
+.footer__meta::before, .footer__meta::after {
+  content: "";
+  inline-size: 4px;
+  block-size: 4px;
+  rotate: 45deg;
+  border: 1px solid var(--gold);
+}
+html:lang(th) .footer__signoff, html:lang(ur) .footer__signoff { font-style: normal; }
+html:lang(th) .footer__dua, html:lang(ur) .footer__dua { text-transform: none; letter-spacing: 0; padding-inline-start: 0; font-size: var(--fs-sm); }
+html:lang(th) .footer__meta, html:lang(ur) .footer__meta { letter-spacing: 0; font-size: var(--fs-sm); text-transform: none; }
+html:lang(ur) .footer__signoff, html:lang(ur) .footer__dua { line-height: 2.1; }
+
+/* ── Scroll reveal: opt-in rise + fade ─────────────────────────────────── */
+.reveal--rise {
+  transition:
+    opacity 1000ms var(--ease-out) calc(var(--reveal-order, 0) * 120ms),
+    transform 1000ms var(--ease-out) calc(var(--reveal-order, 0) * 120ms);
+}
+html.js .reveal--rise.reveal:not(.is-visible) { opacity: 0; transform: translateY(16px); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal--rise { transition: none; }
+  html.js .reveal--rise.reveal:not(.is-visible) { opacity: 1; transform: none; }
+}

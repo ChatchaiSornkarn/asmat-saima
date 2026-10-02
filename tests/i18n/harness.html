@@ -1,0 +1,98 @@
+<!doctype html>
+<!-- Dev harness for the i18n engine + switcher in isolation.
+     Serve asmat-saima/ and open /tests/i18n/harness.html  (?lang=ur, ?overlay=1 for a fake opening overlay) -->
+<html lang="en" dir="ltr" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>i18n harness</title>
+  <meta name="description" content="">
+  <script>
+    (function () {
+      var supported = ['en', 'sv', 'th', 'ur'], pick = null;
+      try { var q = new URLSearchParams(location.search).get('lang'); if (q && supported.indexOf(q) > -1) pick = q; } catch (e) {}
+      if (!pick) {
+        var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+        for (var i = 0; i < list.length && !pick; i++) {
+          var base = String(list[i]).toLowerCase().split('-')[0];
+          if (base === 'nb' || base === 'no' || base === 'da') base = null;
+          if (base && supported.indexOf(base) > -1) pick = base;
+        }
+      }
+      pick = pick || 'en';
+      var h = document.documentElement;
+      h.lang = pick; h.dir = pick === 'ur' ? 'rtl' : 'ltr';
+      h.className = h.className.replace('no-js', 'js');
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Pinyon+Script&display=swap">
+  <link rel="stylesheet" href="../../src/styles/tokens.css">
+  <link rel="stylesheet" href="../../src/styles/switcher.css">
+  <style>
+    input { font: inherit; max-width: 100%; box-sizing: border-box; }
+    body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--font-serif); }
+    .card { max-width: var(--card-max); margin: 0 auto; padding: 96px 24px 64px; text-align: center; }
+    .caps { font-family: var(--font-display); letter-spacing: var(--tracking-caps); text-transform: uppercase;
+            color: var(--gold-deep); font-size: var(--fs-sm); line-height: 1.9; margin: 0; }
+    .nikah { font-family: var(--font-display); color: var(--gold-deep); font-size: var(--fs-xl); letter-spacing: 0.12em;
+             margin: 0.4em 0 0.2em; line-height: 1.6; font-weight: 600; }
+    :root:lang(th) .nikah, :root:lang(ur) .nikah { letter-spacing: 0; }
+    .of { font-family: var(--font-script); color: var(--gold); font-size: var(--fs-lg); margin: 0; line-height: 1.6; }
+    :root:lang(th) .of, :root:lang(ur) .of { font-family: var(--font-serif); font-size: var(--fs-md); }
+    .names { font-family: var(--font-script); color: var(--gold-deep); font-size: var(--fs-names); margin: 0.1em 0; line-height: 1.3; }
+    .rule { height: 1px; background: var(--gold-pale); margin: 24px auto; width: 60%; }
+    .body { text-align: start; font-family: var(--font-ui); font-size: var(--fs-md); line-height: 1.8; }
+    .body h2 { font-family: var(--font-display); color: var(--gold-deep); font-weight: 500; font-size: var(--fs-lg); margin: 0 0 8px; line-height: 1.8; }
+    .body p { margin: 0 0 6px; }
+    .fake-overlay { position: fixed; inset: 0; z-index: var(--z-opening); background: var(--cream-deep);
+                    display: grid; place-items: center; color: var(--gold-deep); font-family: var(--font-display); }
+    .fake-overlay[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <nav id="lang-switcher" class="lang-switcher" aria-label="Language"></nav>
+  <div class="card">
+    <p class="caps" data-i18n="postcard.invitedTo"></p>
+    <p class="nikah" data-i18n="postcard.nikah"></p>
+    <p class="of" data-i18n="postcard.of"></p>
+    <p class="names">Asmat &amp; Saima</p>
+    <p class="caps" data-i18n="postcard.date"></p>
+    <p class="caps" id="time"></p>
+    <p class="caps" style="font-family: 'Cinzel', serif">Säve Flygplatsväg 26<br>Göteborg</p>
+    <div class="rule"></div>
+    <div class="body">
+      <h2 data-i18n="rsvp.heading"></h2>
+      <p data-i18n="rsvp.subheading"></p>
+      <p id="deadline"></p>
+      <p id="count"></p>
+      <p data-i18n="form.phoneHint"></p>
+      <p data-i18n="rsvp.hint"></p>
+      <p id="counter"></p>
+      <p data-i18n="cancel.successAll"></p>
+      <p data-i18n="footer.dua"></p>
+      <p><input data-i18n-attr="placeholder:form.email;aria-label:form.email"></p>
+    </div>
+  </div>
+  <div class="fake-overlay" id="overlay" hidden><span data-i18n="opening.tapToOpen"></span></div>
+  <script type="module">
+    import config from '../../config.js';
+    import { initI18n, applyTranslations, t, onLangChange, formatDate, formatTime } from '../../src/i18n/index.js';
+    import { mountSwitcher } from '../../src/switcher.js';
+    if (new URLSearchParams(location.search).get('overlay')) document.getElementById('overlay').hidden = false;
+    await initI18n(config);
+    mountSwitcher(document.getElementById('lang-switcher'), config);
+    const dyn = () => {
+      document.getElementById('deadline').textContent = t('rsvp.deadline', { date: formatDate('2026-11-15') });
+      document.getElementById('count').textContent = t('rsvp.count', { guests: 24, households: 9, count: 9 });
+      document.getElementById('counter').textContent = t('form.counter', { count: 1 }) + ' / ' + t('form.counter', { count: 3 });
+      document.getElementById('time').textContent = t('postcard.time', { time: formatTime('14:00') });
+    };
+    dyn();
+    applyTranslations(document);
+    onLangChange(dyn);
+    window.__ready = true;
+  </script>
+</body>
+</html>

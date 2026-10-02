@@ -1,0 +1,228 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Language switcher + language cross-fade
+   A small vellum capsule with a gold hairline; the active language sits on a
+   paper "pill" with a fine gold underline that glides between options.
+
+   z-index: the switcher must stay usable while the opening doors are closed, so it
+   sits ABOVE the opening overlay: calc(var(--z-opening) + 10) = 1010
+   (tokens: --z-switcher 900 < --z-opening 1000 < --z-toast 1100).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.lang-switcher {
+  /* Local metrics. Fonts are fixed per option (not the per-language tokens) so the
+     Latin codes stay in Cinzel and اردو in Nastaliq whatever the page language is. */
+  --ls-h: 36px;
+  --ls-inset: 3px;
+  --ls-edge: 10px;
+  --ls-track: 0.17em;
+  --ls-latin: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+  --ls-urdu: 'Lang Switcher Urdu', 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', serif;
+
+  position: fixed;
+  inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--ls-edge));
+  inset-inline-end: calc(env(safe-area-inset-right, 0px) + var(--ls-edge));
+  z-index: calc(var(--z-opening) + 10);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+:root[dir='rtl'] .lang-switcher {
+  inset-inline-end: calc(env(safe-area-inset-left, 0px) + var(--ls-edge));
+}
+.lang-switcher.is-ready { opacity: 1; }
+/* Scrolling down the open page: slide up out of the way (switcher.js toggles it). It stays focusable —
+   Tab into it and it slides back (focusin). */
+.lang-switcher.is-ready {
+  transition: opacity var(--dur-slow) var(--ease-out), transform 420ms var(--ease-out);
+}
+.lang-switcher.is-tucked {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - var(--ls-edge) - env(safe-area-inset-top, 0px)));
+  transition: opacity 260ms var(--ease-in-out), transform 420ms var(--ease-in-out);
+}
+.lang-switcher:empty { display: none; }
+
+.lang-switcher__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  block-size: var(--ls-h);
+  padding-inline: var(--ls-inset);
+  border: 1px solid var(--gold-pale);
+  border-radius: 999px;
+  background: var(--vellum);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Sliding indicator — physical `left` + translateX, measured from offsetLeft in JS,
+   so it is correct in both directions. */
+.lang-switcher__pill {
+  position: absolute;
+  left: 0;
+  inset-block: var(--ls-inset);
+  inline-size: var(--pill-w, 0px);
+  transform: translateX(var(--pill-x, 0px));
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-pale) 55%, var(--gold-light)), var(--shadow-sm);
+  transition:
+    transform 560ms var(--ease-out),
+    inline-size 560ms var(--ease-out);
+  pointer-events: none;
+}
+.lang-switcher__pill::after {          /* the gold underline */
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  inline-size: 12px;
+  block-size: 1px;
+  margin-left: -6px;
+  background: var(--gold);
+  border-radius: 1px;
+  transition: opacity var(--dur) var(--ease-out);
+}
+/* Nastaliq descenders (ر, و) run through an underline, and Urdu does not underline
+   for emphasis — the paper pill alone marks اردو. */
+.lang-switcher__pill[data-on='ur']::after { opacity: 0; }
+.lang-switcher__track.is-instant .lang-switcher__pill { transition: none; }
+
+/* Separators: tiny gold lozenges, the stationery version of "·" */
+.lang-switcher__sep {
+  flex: none;
+  inline-size: 3px;
+  block-size: 3px;
+  background: var(--gold);
+  margin-inline: 4px;
+  opacity: 0.55;
+  transform: rotate(45deg);
+}
+
+.lang-switcher__opt {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  block-size: calc(var(--ls-h) - 2 * var(--ls-inset) - 2px);
+  min-inline-size: 2.5rem;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--ls-latin);
+  font-size: 0.6875rem;               /* 11px */
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--ls-track);
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color var(--dur) var(--ease-out);
+}
+/* Letter-spacing adds space after the last letter; balance it (Latin is always LTR). */
+.lang-switcher__opt:not([lang='ur']) .lang-switcher__label { padding-left: var(--ls-track); }
+
+.lang-switcher__opt[lang='ur'] {
+  font-family: var(--ls-urdu);
+  font-size: 0.875rem;                /* Nastaliq reads small — 14px ≈ 11px caps */
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.lang-switcher__opt[lang='ur'] .lang-switcher__label {
+  /* Nastaliq ink hangs well below its line box (ر, و descend): lift it to the optical
+     centre of the pill. */
+  transform: translateY(-0.12em);
+}
+
+/* Bigger touch target than the visible pill (≥ 44 × 44px) without changing the look:
+   reaches 8px above/below and half-way into the separator gaps on either side. */
+.lang-switcher__opt::after {
+  content: '';
+  position: absolute;
+  inset-block: -8px;
+  inset-inline: -5px;
+}
+.lang-switcher__opt:first-of-type::after { inset-inline-start: calc(-1 * var(--ls-inset)); }
+.lang-switcher__opt:last-of-type::after { inset-inline-end: calc(-1 * var(--ls-inset)); }
+
+.lang-switcher__opt:hover { color: var(--gold-deep); }
+.lang-switcher__opt[aria-pressed='true'] { color: var(--gold-deep); }
+.lang-switcher__opt:focus { outline: none; }
+.lang-switcher__opt:focus-visible {
+  outline: 2px solid transparent;     /* still drawn in forced-colours mode */
+  box-shadow: var(--focus-ring);
+}
+
+/* While strings/fonts for the chosen language load (rarely > a blink) */
+.lang-switcher__opt.is-pending { color: var(--gold-deep); }
+.lang-switcher__opt.is-pending .lang-switcher__label { animation: ls-breathe 900ms var(--ease-in-out) infinite alternate; }
+@keyframes ls-breathe { from { opacity: 1; } to { opacity: 0.45; } }
+
+@media (min-width: 48em) {
+  .lang-switcher {
+    --ls-h: 40px;
+    --ls-edge: 20px;
+  }
+  .lang-switcher__opt {
+    min-inline-size: 2.85rem;
+    padding-inline: 0.75rem;
+    font-size: 0.75rem;               /* 12px */
+  }
+  .lang-switcher__opt[lang='ur'] { font-size: 0.95rem; }
+  .lang-switcher__pill::after { bottom: 6px; inline-size: 14px; margin-left: -7px; }
+}
+
+@media (hover: hover) {
+  .lang-switcher__track { transition: box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); }
+  .lang-switcher__track:hover { border-color: var(--gold-light); box-shadow: var(--shadow); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-switcher,
+  .lang-switcher__pill,
+  .lang-switcher__opt { transition: none; }
+  .lang-switcher__opt.is-pending .lang-switcher__label { animation: none; }
+}
+
+@media (forced-colors: active) {
+  .lang-switcher__track { border-color: CanvasText; background: Canvas; }
+  .lang-switcher__pill { background: Canvas; box-shadow: none; outline: 2px solid Highlight; }
+  .lang-switcher__opt { color: CanvasText; }
+  .lang-switcher__opt[aria-pressed='true'] { color: Highlight; }
+  .lang-switcher__sep { background: CanvasText; }
+}
+
+@media print {
+  .lang-switcher { display: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Language cross-fade (driven by src/i18n/index.js)
+   html.is-switching      whole switch: loading strings/fonts → fade finished
+   html.is-lang-vt        a View Transition is running for the switch
+   html.is-switching-out  fallback (no View Transitions): text is faded out
+   Elements with [data-i18n] or class .i18n-fade join the fallback fade.
+   ───────────────────────────────────────────────────────────────────────── */
+html.is-switching { cursor: progress; }
+
+html.is-lang-vt::view-transition-old(root),
+html.is-lang-vt::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+html.is-switching :where([data-i18n], .i18n-fade) {
+  transition: opacity 170ms var(--ease-in-out);
+}
+html.is-switching-out :where([data-i18n], .i18n-fade) {
+  opacity: 0;
+}

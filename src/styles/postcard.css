@@ -1,0 +1,535 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Postcard — the invitation card (design Q7, Q18). Owned by src/postcard.js.
+
+   Geometry: --u = card width / 1024, i.e. one pixel of the reference PNG
+   (requirements/references/invite_postcard.png). Every position and size below
+   is written in --u so the card scales as one composition.
+
+   Two presentations:
+     phones (viewport narrower than 5:8)  full-bleed: the card IS the first screen
+                                          (fills the grid row base.css gives it);
+                                          extra height becomes breathing room.
+     everything else                      a 2:3 cotton card with a deckled edge and a
+                                          soft shadow, sized to fit the viewport.
+   Art never mirrors in RTL (flowers top-left/bottom-right, lanterns top-right —
+   it is a picture); only the text column follows the language direction.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.postcard-section {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.postcard {
+  /* palette (sampled from the reference; derived from tokens where they exist) */
+  --pc-paper:      #eee4d0;
+  --pc-paper-flat: #eee3cf;          /* behind the rings' interlock gap */
+  --pc-paper-edge: #e6d8bd;
+  --pc-line:       #a67c38;          /* arch & ornaments: the PNG's warm copper-gold */
+  --pc-line-soft:  color-mix(in srgb, var(--pc-line) 70%, var(--gold-pale));
+  --pc-caps:       #86652a;          /* small caps lines (≥ 4.5:1 on the paper) */
+  --pc-title:      #8a6528;
+  --pc-date:       #6a5527;
+  --pc-addr:       #57523d;
+  --pc-foil-hi:    #c9a560;
+  --pc-foil:       #9c7430;
+  --pc-foil-lo:    #7a5520;
+  --pc-gem-hi:     #f7ecd3;
+  --pc-gem-lo:     #dcc28c;
+  --pc-leaf:       #c6a15c;
+  --pc-leaf-lo:    #a98143;
+
+  /* responsive scales: --k text, --ka art (raised on tall phones, see container queries) */
+  --k: 1;
+  --ka: 1;
+  --fit: 1;
+
+  container: postcard / size;
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 30rem;
+  color: var(--pc-caps);
+  font-family: var(--font-display);
+  isolation: isolate;
+}
+
+/* ── Phones: full-bleed, fills the grid row (100svh minus the RSVP cue) ── */
+.site__card > #postcard.postcard-section,
+#postcard.postcard-section {
+  align-self: stretch;
+  justify-self: stretch;
+}
+@media (min-aspect-ratio: 5/8) {
+  .site__card > #postcard.postcard-section,
+  #postcard.postcard-section {
+    align-self: center;
+    justify-self: center;
+    padding-block: clamp(0.75rem, 3svh, 2rem);
+  }
+  .postcard {
+    --pc-max: 640px;
+    --pc-margin: clamp(1.5rem, 4svh, 3rem);
+    inline-size: min(var(--pc-max), calc(100vw - 2 * var(--gutter, 16px)), calc((100svh - 2 * var(--pc-margin) - 3.5rem) * 2 / 3));
+    block-size: auto;
+    aspect-ratio: 2 / 3;
+    min-block-size: 0;
+    filter: none;
+  }
+}
+/* phones in landscape / short windows: never shrink below a readable card — the page scrolls instead */
+@media (min-aspect-ratio: 5/8) and (max-height: 600px) and (max-width: 999.98px) {
+  .postcard { inline-size: min(360px, calc(100vw - 2 * var(--gutter, 16px))); }
+}
+@media (min-width: 1000px) {
+  .postcard {
+    --pc-max: var(--card-max);
+    inline-size: min(var(--pc-max), 100%, calc((100svh - 2 * clamp(1.5rem, 4svh, 3rem)) * 2 / 3));
+  }
+  .site__card > #postcard.postcard-section,
+  #postcard.postcard-section { padding-block: 0; }
+}
+
+/* ── Sheet & paper ──────────────────────────────────────────────────────── */
+.postcard__sheet {
+  --u: calc(100cqi / 1024);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.postcard__paper {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* phones: the page's own paper shows through; just a warm breath around the arch */
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, color-mix(in srgb, var(--paper) 55%, transparent), transparent 75%);
+}
+@media (min-aspect-ratio: 5/8) {
+  .postcard__paper {
+    background-color: var(--pc-paper);
+    background-image:
+      /* fine tooth */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .25 0 0 0 0 .13 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E"),
+      /* cotton fibres / mottling */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .2 0 0 0 .7 -.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.16'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 75% 60% at 50% 40%, rgba(255, 250, 238, 0.35), transparent 70%),
+      radial-gradient(ellipse 120% 95% at 50% 50%, transparent 58%, color-mix(in srgb, var(--pc-paper-edge) 80%, transparent) 100%);
+    background-size: 180px 180px, 520px 520px, 100% 100%, 100% 100%;
+    /* the paper's thickness: a lit top edge and a faint darker rim */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      inset 0 0 0 1px rgba(150, 120, 70, 0.10),
+      inset 0 -2px 3px -1px rgba(120, 92, 50, 0.10);
+  }
+  /* lifted off the linen */
+  .postcard::before {
+    content: "";
+    position: absolute;
+    inset: 1.5px;
+    z-index: -1;
+    border-radius: 2px;
+    box-shadow:
+      0 1px 2px -1px rgba(74, 59, 34, 0.18),
+      0 6px 14px -4px rgba(74, 59, 34, 0.16),
+      0 22px 44px -12px rgba(74, 59, 34, 0.22),
+      0 50px 90px -30px rgba(74, 59, 34, 0.20);
+  }
+}
+
+/* ── Frame (arch) ───────────────────────────────────────────────────────── */
+.postcard__frame {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.postcard__frame path { fill: none; stroke-linejoin: round; stroke-linecap: butt; }
+.postcard__arch-line { stroke: var(--pc-line); stroke-width: var(--stroke, 1.2px); }
+/* a whisper of pale gold beside the line: reads as a foil edge, not a second rule */
+.postcard__arch-glow {
+  stroke: var(--gold-pale);
+  stroke-width: calc(var(--stroke, 1.2px) * 3.2);
+  opacity: 0.35;
+}
+.postcard__arch { position: absolute; pointer-events: none; visibility: hidden; }
+
+/* ── Art layers (physical positions on purpose: the picture does not mirror) ── */
+.postcard__art, .postcard__lantern img {
+  position: absolute;
+  display: block;
+  max-inline-size: none;
+  block-size: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.postcard__roses--tl {
+  left: 0; top: 0;
+  width: calc(var(--u) * 336 * var(--ka));
+  transform-origin: 0 0;
+}
+.postcard__roses--br {
+  right: 0; bottom: 0;
+  width: calc(var(--u) * 308 * var(--ka));
+  transform-origin: 100% 100%;
+}
+.postcard__couple {
+  left: 50%;
+  bottom: calc(var(--u) * 72);
+  width: calc(var(--u) * 338 * var(--ka));
+  transform: translateX(calc(-50% + var(--u) * 13 * var(--ka)));
+  transform-origin: 50% 100%;
+}
+.postcard__lantern {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+}
+.postcard__lantern--1 { right: calc(var(--u) * 132); width: calc(var(--u) * 104 * var(--ka)); }
+.postcard__lantern--2 { right: calc(var(--u) * 40);  width: calc(var(--u) * 100 * var(--ka)); }
+.postcard__lantern-swing { position: relative; transform-origin: 50% 0; }
+.postcard__lantern img { position: relative; inline-size: 100%; }
+.postcard__flame {
+  position: absolute;
+  inline-size: 120%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, rgba(255, 232, 170, 0.55), rgba(255, 214, 140, 0.22) 45%, rgba(255, 205, 120, 0) 100%);
+  mix-blend-mode: soft-light;
+  opacity: 0.9;
+  pointer-events: none;
+}
+.postcard__lantern--1 .postcard__flame { left: 54%; top: 59.5%; }
+.postcard__lantern--2 .postcard__flame { left: 47.5%; top: 70.5%; }
+
+/* ── Text column ────────────────────────────────────────────────────────── */
+.postcard__content {
+  --zone-bottom: calc(var(--u) * (72 + 439 * var(--ka) + 46));
+  position: absolute;
+  left: calc(var(--u) * 84);
+  right: calc(var(--u) * 84);
+  top: calc(var(--u) * 180 + var(--pc-shift, 0px));
+  bottom: var(--zone-bottom);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 2;
+}
+.postcard__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 68 1 auto;                 /* = the sum of its inner spacer weights */
+  inline-size: 100%;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: normal;
+  line-height: 1;
+}
+.pc-sp { display: block; flex: var(--g) 1 0px; min-block-size: calc(var(--u) * var(--g) * 0.5); }
+.pc-vh {
+  position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+.postcard__invited,
+.postcard__nikah,
+.postcard__date,
+.postcard__time,
+.postcard__venue {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-kerning: normal;
+  text-wrap: balance;
+}
+.postcard__invited {
+  display: block;
+  max-inline-size: calc(var(--u) * 760);   /* stays within the dome's shoulders; wraps (balanced) if wider */
+  font-size: max(9.5px, calc(var(--u) * 24 * min(var(--k), 1.08) * var(--fit)));
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  margin-inline-end: -0.18em;        /* tracking adds trailing space; keep the line optically centred */
+  line-height: 1.5;
+  color: var(--pc-caps);
+}
+.postcard__nikah {
+  display: block;
+  font-size: max(26px, calc(var(--u) * 62 * var(--k) * var(--fit)));
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  margin-inline-end: -0.16em;
+  line-height: 1.1;
+  color: var(--pc-title);
+  background: linear-gradient(180deg, #a07a34 0%, #84601f 55%, #94702c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.postcard__of {
+  display: block;
+  font-family: var(--font-script);
+  font-size: max(24px, calc(var(--u) * 70 * var(--k) * var(--fit)));
+  line-height: 1;
+  color: var(--pc-title);
+  padding-inline: 0.2em;
+}
+
+/* Names: Pinyon Script in every language, gold foil with a slow light sweep */
+.postcard__names {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  font-family: 'Pinyon Script', 'Great Vibes', cursive;
+  font-size: calc(var(--u) * 142 * min(var(--k), 1.08) * var(--fit) * var(--nfit, 1));
+  line-height: 1.3;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+  direction: ltr;
+}
+.postcard__name {
+  display: inline-block;
+  /* room for the swashes so background-clip:text never crops a flourish */
+  padding: 0.12em 0.3em 0.22em;
+  margin: -0.12em -0.3em -0.22em;
+  color: var(--pc-foil);
+  background-image:
+    linear-gradient(105deg, transparent 0 42%, rgba(255, 246, 216, 0.85) 50%, transparent 58% 100%),
+    linear-gradient(172deg, #b18a41 0%, #8c6524 38%, #b48c45 56%, #7f5a1e 78%, #a07a35 100%);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 130% 0, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.postcard__amp {
+  display: inline-flex;
+  align-items: center;
+  margin-inline: calc(var(--u) * 10 * min(var(--k), 1.08) * var(--fit) * var(--nfit, 1));
+}
+
+.postcard__rings { display: block; inline-size: calc(var(--u) * 116 * min(var(--k), 1.08) * var(--fit) * var(--nfit, 1)); translate: 0 -0.08em; }
+.postcard__rings svg { display: block; inline-size: 100%; block-size: auto; overflow: visible; }
+.postcard__laurel { display: block; flex: none; inline-size: calc(var(--u) * 44 * min(var(--k), 1.08) * var(--fit) * var(--nfit, 1)); }
+.postcard__laurel svg { display: block; inline-size: 100%; block-size: auto; }
+.postcard__laurel--start { margin-inline-end: calc(var(--u) * -2); }
+.postcard__laurel--end { margin-inline-start: calc(var(--u) * -2); }
+
+.postcard__when { margin: 0; line-height: 1.4; }
+.postcard__date, .postcard__time {
+  display: block;
+  font-size: max(11px, calc(var(--u) * 27 * var(--k) * var(--fit)));
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  margin-inline-end: -0.2em;
+  color: var(--pc-date);
+}
+.postcard__time { font-size: max(10px, calc(var(--u) * 22 * var(--k) * var(--fit))); margin-block-start: 0.35em; color: var(--pc-caps); }
+.postcard__time[hidden] { display: none; }
+
+.postcard__venue { margin: 0; line-height: 1.55; }
+.postcard__map {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--pc-addr);
+  text-decoration: none;
+  font-size: max(10px, calc(var(--u) * 22.5 * var(--k) * var(--fit)));
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  border-radius: 4px;
+  padding: 0.15em 0.5em;
+  transition: color var(--dur) ease;
+}
+/* ≥ 44px touch target on small phones without moving the type */
+.postcard__map { position: relative; }
+.postcard__map::after { content: ''; position: absolute; inset: -6px -4px; }
+.postcard__venue-line { display: block; margin-inline-end: -0.22em; }
+.postcard__venue-line--1 { display: inline-flex; align-items: center; gap: 0.75em; direction: ltr; }
+/* the pin hangs outside the centred line so line 1 and line 2 share one centre, as on the card */
+.postcard__venue-line--1 .pc-pin { inline-size: 1.08em; block-size: auto; flex: none; fill: var(--pc-line); margin-inline-start: -1.95em; translate: 0 -0.1em; }
+.postcard__map:hover, .postcard__map:focus-visible { color: var(--pc-caps); }
+.postcard__map:hover .postcard__venue-line span,
+.postcard__map:focus-visible .postcard__venue-line span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: var(--pc-line-soft); }
+.postcard__map:focus-visible { outline: 2px solid var(--pc-line); outline-offset: 4px; }
+
+/* ── Ornaments ──────────────────────────────────────────────────────────── */
+.pc-top-rosette { display: block; inline-size: calc(var(--u) * 48 * var(--fit)); }
+.pc-rosette { display: block; inline-size: 100%; block-size: auto; overflow: visible; }
+.pc-rosette__fill path { fill: color-mix(in srgb, var(--pc-paper) 50%, #fffaf0); stroke: none; }
+.pc-rosette__line path, .pc-rosette__line circle { fill: none; stroke: var(--pc-line); stroke-width: 3.3; stroke-linejoin: round; }
+.pc-rosette__line .pc-thin { stroke-width: 1.4; opacity: 0.75; }
+.pc-rosette__line .pc-dot { fill: var(--pc-line); stroke: none; }
+
+.pc-divider-wrap { display: block; inline-size: 100%; }
+.pc-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 14);
+  inline-size: 100%;
+}
+.pc-divider__rosette { inline-size: calc(var(--u) * 44 * var(--fit)); flex: none; }
+.pc-divider__line { display: block; inline-size: calc(var(--u) * 146); block-size: calc(var(--u) * 6.5); min-block-size: 2.4px; flex: none; overflow: visible; }
+.pc-divider--bottom .pc-divider__line { inline-size: calc(var(--u) * 116); }
+.pc-hairline path { fill: var(--pc-line); }
+/* RTL: the hairlines keep tapering away from the rosette */
+[dir="rtl"] .pc-divider__line { transform: scaleX(-1); }
+
+.pc-leaf { fill: url(#pc-leaf-grad); stroke: var(--pc-leaf-lo); stroke-width: 0.35; opacity: 0.95; }
+.pc-leaf-vein { fill: none; stroke: var(--pc-leaf-lo); stroke-width: 0.45; opacity: 0.6; }
+.pc-stem { fill: none; stroke: var(--pc-leaf-lo); stroke-width: 1.1; stroke-linecap: round; }
+.pc-rings .pc-ring-gap { opacity: 1; }
+.pc-sparkle { opacity: 0; }
+
+/* ── Tall phones: more room → slightly larger type and art ─────────────── */
+@container postcard (aspect-ratio < 0.62) { .postcard__sheet { --k: 1.12; --ka: 1.1; } }
+@container postcard (aspect-ratio < 0.54) { .postcard__sheet { --k: 1.2;  --ka: 1.2; } }
+@container postcard (aspect-ratio < 0.48) { .postcard__sheet { --k: 1.26; --ka: 1.28; } }
+
+/* ── Thai & Urdu: no case, no tracking, taller lines ───────────────────── */
+:lang(th) .postcard__invited, :lang(th) .postcard__nikah, :lang(th) .postcard__date,
+:lang(th) .postcard__time, :lang(th) .postcard__map, :lang(th) .postcard__venue-line {
+  letter-spacing: 0; margin-inline-end: 0;
+}
+:lang(th) .postcard__invited { line-height: 1.75; font-size: max(13px, calc(var(--u) * 30 * var(--k) * var(--fit))); font-weight: 500; }
+:lang(th) .postcard__nikah { line-height: 1.5; font-size: max(26px, calc(var(--u) * 60 * var(--k) * var(--fit))); font-weight: 600; }
+:lang(th) .postcard__of { font-family: var(--font-serif); font-size: max(15px, calc(var(--u) * 34 * var(--k) * var(--fit))); line-height: 1.6; }
+:lang(th) .postcard__date { font-size: max(13px, calc(var(--u) * 31 * var(--k) * var(--fit))); line-height: 1.7; }
+:lang(th) .postcard__map { font-size: max(12px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.7; }
+
+:lang(ur) .postcard__invited, :lang(ur) .postcard__nikah, :lang(ur) .postcard__date,
+:lang(ur) .postcard__time, :lang(ur) .postcard__map, :lang(ur) .postcard__venue-line {
+  letter-spacing: 0; margin-inline-end: 0; text-transform: none;
+}
+:lang(ur) .postcard__invited { line-height: 2; font-size: max(11.5px, calc(var(--u) * 35 * var(--k) * var(--fit))); font-weight: 400; }
+:lang(ur) .postcard__nikah { line-height: 1.9; font-size: max(21px, calc(var(--u) * 58 * var(--k) * var(--fit))); font-weight: 400; padding-block: 0.1em; }
+:lang(ur) .postcard__of { font-family: var(--font-serif); font-size: max(13px, calc(var(--u) * 38 * var(--k) * var(--fit))); line-height: 2; }
+:lang(ur) .postcard__date { font-size: max(11.5px, calc(var(--u) * 36 * var(--k) * var(--fit))); line-height: 2; font-weight: 400; }
+:lang(ur) .postcard__map { font-size: max(10px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.9; font-weight: 400; }
+/* the street address is Latin script — keep it in the card's caps face */
+.postcard__venue-line { unicode-bidi: plaintext; }
+:lang(ur) .postcard__venue-line, :lang(th) .postcard__venue-line { font-family: 'Cinzel', 'Cormorant Garamond', serif; letter-spacing: 0.18em; text-transform: uppercase; }
+
+/* ── Entrance (plays when main.js adds html.is-open) ───────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .postcard { --t0: 0ms; }
+
+  /* before the doors open: the paper waits, everything else is about to arrive */
+  html.js:not(.is-open) .postcard .pc-in { opacity: 0; transform: translateY(calc(var(--u) * 16)); filter: blur(3px); }
+  html.js:not(.is-open) .postcard .postcard__roses--tl { opacity: 0; transform: scale(0.86) rotate(-3deg); }
+  html.js:not(.is-open) .postcard .postcard__roses--br { opacity: 0; transform: scale(0.86) rotate(3deg); }
+  html.js:not(.is-open) .postcard .postcard__couple { opacity: 0; transform: translateX(calc(-50% + var(--u) * 13 * var(--ka))) translateY(calc(var(--u) * 22)); }
+  html.js:not(.is-open) .postcard .postcard__lantern { transform: translateY(-105%); }
+  html.js:not(.is-open) .postcard .postcard__arch-line,
+  html.js:not(.is-open) .postcard .postcard__arch-glow { stroke-dasharray: 0 1; stroke-dashoffset: -0.5; }
+  html.js:not(.is-open) .postcard .pc-draw { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+  html.js:not(.is-open) .postcard .pc-rosette__fill,
+  html.js:not(.is-open) .postcard .pc-leaf,
+  html.js:not(.is-open) .postcard .pc-leaf-vein,
+  html.js:not(.is-open) .postcard .pc-gem,
+  html.js:not(.is-open) .postcard .pc-dot,
+  html.js:not(.is-open) .postcard .pc-hairline { opacity: 0; }
+
+  .postcard .pc-in {
+    transition:
+      opacity 1100ms var(--ease-out) calc(var(--t0) + 250ms + var(--i) * 110ms),
+      transform 1300ms var(--ease-out) calc(var(--t0) + 250ms + var(--i) * 110ms),
+      filter 1100ms var(--ease-out) calc(var(--t0) + 250ms + var(--i) * 110ms);
+  }
+  .postcard .postcard__roses {
+    transition: opacity 1500ms var(--ease-out) calc(var(--t0) + 200ms), transform 2000ms var(--ease-out) calc(var(--t0) + 200ms);
+  }
+  .postcard .postcard__roses--br { transition-delay: calc(var(--t0) + 450ms); }
+  .postcard .postcard__couple {
+    transition: opacity 1400ms var(--ease-out) calc(var(--t0) + 1300ms), transform 1600ms var(--ease-out) calc(var(--t0) + 1300ms);
+  }
+  .postcard .pc-rosette__fill, .postcard .pc-leaf, .postcard .pc-leaf-vein, .postcard .pc-gem, .postcard .pc-dot, .postcard .pc-hairline {
+    transition: opacity 900ms ease calc(var(--t0) + 1100ms + var(--i, 4) * 120ms);
+  }
+
+  html.is-open .postcard .postcard__arch-line,
+  html.is-open .postcard .postcard__arch-glow { animation: pc-arch 2600ms var(--ease-in-out) var(--t0) both; }
+  html.is-open .postcard .pc-draw { animation: pc-draw 1500ms var(--ease-out) calc(var(--t0) + 650ms + var(--i, 4) * 120ms) both; }
+  html.is-open .postcard .pc-hairline { transform-origin: center; }
+
+  html.is-open .postcard .postcard__lantern--1 { animation: pc-drop 1900ms cubic-bezier(.3, .7, .3, 1) calc(var(--t0) + 500ms) both; }
+  html.is-open .postcard .postcard__lantern--2 { animation: pc-drop 2100ms cubic-bezier(.3, .7, .3, 1) calc(var(--t0) + 750ms) both; }
+  html.is-open .postcard .postcard__lantern--1 .postcard__lantern-swing { animation: pc-sway 5.8s ease-in-out calc(var(--t0) + 1500ms) infinite; }
+  html.is-open .postcard .postcard__lantern--2 .postcard__lantern-swing { animation: pc-sway2 7.3s ease-in-out calc(var(--t0) + 1900ms) infinite; }
+  html.is-open .postcard .postcard__flame { animation: pc-flicker 3.1s linear infinite; }
+  html.is-open .postcard .postcard__lantern--2 .postcard__flame { animation-duration: 2.6s; animation-delay: -1.1s; }
+
+  html.is-open .postcard .postcard__name { animation: pc-sheen 11s ease-in-out calc(var(--t0) + 2600ms) infinite; }
+  html.is-open .postcard .postcard__name--2 { animation-delay: calc(var(--t0) + 2900ms); }
+  html.is-open .postcard .pc-sparkle { animation: pc-twinkle 11s ease-in-out calc(var(--t0) + 3100ms) infinite; }
+}
+
+@keyframes pc-arch {
+  from { stroke-dasharray: 0 1; stroke-dashoffset: -0.5; }
+  to   { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+}
+@keyframes pc-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes pc-drop {
+  0%   { transform: translateY(-105%); }
+  62%  { transform: translateY(2.2%); }
+  80%  { transform: translateY(-0.8%); }
+  92%  { transform: translateY(0.3%); }
+  100% { transform: translateY(0); }
+}
+@keyframes pc-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1.6deg); }
+  75% { transform: rotate(-1.6deg); }
+}
+@keyframes pc-sway2 {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-1.3deg); }
+  75% { transform: rotate(1.3deg); }
+}
+@keyframes pc-flicker {
+  0%   { opacity: 0.82; scale: 1; }
+  9%   { opacity: 1;    scale: 1.04; }
+  14%  { opacity: 0.76; scale: 0.98; }
+  27%  { opacity: 0.95; scale: 1.03; }
+  41%  { opacity: 0.84; scale: 1; }
+  55%  { opacity: 1;    scale: 1.05; }
+  63%  { opacity: 0.8;  scale: 0.99; }
+  78%  { opacity: 0.93; scale: 1.02; }
+  100% { opacity: 0.82; scale: 1; }
+}
+@keyframes pc-sheen {
+  0%   { background-position: 130% 0, 0 0; }
+  22%  { background-position: -30% 0, 0 0; }
+  100% { background-position: -30% 0, 0 0; }
+}
+@keyframes pc-twinkle {
+  0%, 18%, 30%, 100% { opacity: 0; transform: scale(0.4); }
+  24% { opacity: 1; transform: scale(1); }
+}
+.pc-sparkle { transform-box: fill-box; transform-origin: center; }
+
+/* Phones in landscape / very short screens: the card mode handles it, but never clip the text */
+@media (prefers-reduced-motion: reduce) {
+  .postcard *, .postcard *::before { animation: none !important; transition: none !important; }
+}
+
+@media print {
+  .postcard { box-shadow: none; }
+  .postcard__lantern, .postcard__flame { animation: none !important; }
+}
