@@ -14,12 +14,17 @@ const memStore = () => {
   return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), _m: m };
 };
 const mk = (o = {}) => createMock({ storage: memStore(), latency: [0, 0], ...o });
-const party = (over = {}) => ({
-  action: 'attend', lang: 'en',
-  main: { first: 'Asmat', last: 'Khan', email: 'a@x.se', phone: '070 123 45 67' },
-  members: [{ first: 'Sara', last: 'Khan' }, { first: 'Omar', last: 'Khan' }],
+const party0 = (over = {}) => ({
+  action: 'attend', lang: 'en', side: 'asmat',
+  main: { first: 'Asmat', last: 'Khan', email: 'a@x.se', phone: '070 123 45 67', category: 'man' },
+  members: [{ first: 'Sara', last: 'Khan', category: 'woman' }, { first: 'Omar', last: 'Khan', category: 'infant' }],
   message: 'No nuts please', website: '', ...over,
 });
+// Every person carries a category (issue 17); rows written without one default to man / woman.
+const party = (over = {}) => {
+  const b = party0(over);
+  return { ...b, main: { category: 'man', ...b.main }, members: b.members.map((m) => ({ category: 'woman', ...m })) };
+};
 
 // ── Phone ──────────────────────────────────────────────────────────────────
 test('normalisePhone: Swedish, 00, +, separators', () => {
@@ -70,7 +75,7 @@ test('field checks return i18n keys', () => {
 });
 
 test('validateAttend reports paths, cap', () => {
-  const v = validateAttend({ main: { first: ' ', last: 'K', email: 'bad', phone: '123' }, members: [{ first: 'A', last: '' }], message: '' });
+  const v = validateAttend({ main: { first: ' ', last: 'K', email: 'bad', phone: '123', category: 'man' }, members: [{ first: 'A', last: '', category: 'infant' }], message: '' });
   assert.equal(v.ok, false);
   assert.deepEqual(v.errors, { 'main.first': 'validation.required', 'main.email': 'validation.email', 'main.phone': 'validation.phone', 'members.0.last': 'validation.required' });
   assert.equal(validateAttend(party()).ok, true);
@@ -83,15 +88,16 @@ test('validateAttend reports paths, cap', () => {
 });
 
 test('buildAttendPayload cleans values into the exact contract', () => {
-  const p = buildAttendPayload({ main: { first: ' Asmat  ', last: 'Khan', email: ' a@x.se ', phone: ' 070 123 45 67 ' }, members: [{ first: ' Sara ', last: ' Khan' }], message: ' hi\r\n ', website: '' }, 'sv');
-  assert.deepEqual(p, { action: 'attend', lang: 'sv', main: { first: 'Asmat', last: 'Khan', email: 'a@x.se', phone: '070 123 45 67' }, members: [{ first: 'Sara', last: 'Khan' }], message: 'hi', website: '' });
+  const p = buildAttendPayload({ main: { first: ' Asmat  ', last: 'Khan', email: ' a@x.se ', phone: ' 070 123 45 67 ', category: 'man' }, members: [{ first: ' Sara ', last: ' Khan', category: 'woman' }], message: ' hi\r\n ', website: '' }, 'sv');
+  assert.deepEqual(p, { action: 'attend', lang: 'sv', main: { first: 'Asmat', last: 'Khan', email: 'a@x.se', phone: '070 123 45 67', category: 'man' }, members: [{ first: 'Sara', last: 'Khan', category: 'woman' }], message: 'hi', website: '' });
 });
 
 // ── Mock backend state machine ────────────────────────────────────────────
 test('mock: attend → resubmit by email → by phone → lookup needs both → partial → full cancel → count', async () => {
   const api = mk();
   let r = await api.attend(party());
-  assert.deepEqual(r, { ok: true, partySize: 3, names: ['Asmat Khan', 'Sara Khan', 'Omar Khan'], replaced: false });
+  assert.deepEqual(r, { ok: true, partySize: 3, names: ['Asmat Khan', 'Sara Khan', 'Omar Khan'],
+    people: [{ name: 'Asmat Khan', category: 'man' }, { name: 'Sara Khan', category: 'woman' }, { name: 'Omar Khan', category: 'infant' }], replaced: false });
   assert.deepEqual(await api.count(), { ok: true, guests: 3, households: 1 });
 
   // Another household
@@ -111,13 +117,13 @@ test('mock: attend → resubmit by email → by phone → lookup needs both → 
   // Lookup needs BOTH
   assert.deepEqual(await api.lookup('new@x.se', '0701234567'), { ok: false, error: 'not_found' });
   assert.deepEqual(await api.lookup('a@x.se', '0709999999'), { ok: false, error: 'not_found' });   // superseded email
-  assert.deepEqual(await api.lookup('NEW@x.se', '0046 70 999 99 99'), { ok: true, names: ['Asmat Khan', 'Sara Khan'] });
+  assert.deepEqual((await api.lookup('NEW@x.se', '0046 70 999 99 99')).names, ['Asmat Khan', 'Sara Khan']);
   assert.deepEqual(await api.lookup('', ''), { ok: false, error: 'not_found' });
 
   // Partial cancel
   r = await api.cancel({ action: 'cancel', lang: 'en', email: 'new@x.se', phone: '0709999999', cancel: ['Sara Khan'], message: '', website: '' });
   assert.deepEqual(r, { ok: true, cancelled: ['Sara Khan'], remaining: ['Asmat Khan'], status: 'active' });
-  assert.deepEqual(await api.lookup('new@x.se', '0709999999'), { ok: true, names: ['Asmat Khan'] });
+  assert.deepEqual((await api.lookup('new@x.se', '0709999999')).names, ['Asmat Khan']);
   assert.deepEqual(await api.count(), { ok: true, guests: 2, households: 2 });
 
   // Cancel with unknown name / nothing selected → invalid, no write
@@ -161,7 +167,7 @@ test('mock: duplicate names cancel one at a time; state persists in storage', as
   assert.deepEqual(r.remaining, ['Asmat Khan', 'Sara Khan']);
   assert.ok(storage.getItem(DEMO_KEY));
   const b = createMock({ storage, latency: [0, 0] });             // a new page load
-  assert.deepEqual(await b.lookup('a@x.se', '0701234567'), { ok: true, names: ['Asmat Khan', 'Sara Khan'] });
+  assert.deepEqual((await b.lookup('a@x.se', '0701234567')).names, ['Asmat Khan', 'Sara Khan']);
   b.reset();
   assert.equal(storage.getItem(DEMO_KEY), null);
   storage.setItem(DEMO_KEY, '{corrupt');

@@ -75,7 +75,7 @@ export function mountPostcard(el, config) {
       </h1>
       ${sp(40)}
       <p class="postcard__when pc-in" style="--i:6">
-        <time class="postcard__date" datetime="${esc(config.eventDate || '2026-12-06')}" data-i18n="postcard.date">${esc(t('postcard.date'))}</time>
+        <time class="postcard__date" datetime="${esc(config.eventDate || '2026-12-13')}" data-i18n="postcard.date">${esc(t('postcard.date'))}</time>
         <span class="postcard__time" hidden></span>
       </p>
       ${sp(62)}
@@ -108,7 +108,7 @@ export function mountPostcard(el, config) {
     let time;
     try {
       time = new Intl.DateTimeFormat(getLocale(), { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
-        .format(new Date(Date.UTC(2026, 11, 6, hh, mm || 0)));
+        .format(new Date(Date.UTC(2026, 11, 13, hh, mm || 0)));
     } catch { time = config.eventStart; }
     timeEl.textContent = t('postcard.time', { time });
     timeEl.hidden = false;

@@ -11,8 +11,8 @@ const ISO = (s) => `⁨${s}⁩`;
 
 export default {
   meta: {
-    title: 'Asmat & Saima · نکاح · 6 دسمبر 2026ء',
-    description: 'آپ کو Asmat & Saima کی تقریبِ نکاح میں بصد مسرت مدعو کیا جاتا ہے — بروز اتوار، 6 دسمبر 2026ء، گوتھنبرگ۔',
+    title: 'Asmat & Saima · نکاح · 13 دسمبر 2026ء',
+    description: 'آپ کو Asmat & Saima کی تقریبِ نکاح میں بصد مسرت مدعو کیا جاتا ہے — بروز اتوار، 13 دسمبر 2026ء، گوتھنبرگ۔',
   },
 
   switcher: {
@@ -30,7 +30,7 @@ export default {
     invitedTo: 'آپ کو بصد مسرت مدعو کیا جاتا ہے',
     nikah: 'تقریبِ نکاح',
     of: 'مابین',
-    date: 'بروز اتوار، 6 دسمبر 2026ء',
+    date: 'بروز اتوار، 13 دسمبر 2026ء',
     time: 'بوقت {time}',
     mapAria: 'پتا نقشے میں کھولیں',
   },
@@ -45,7 +45,7 @@ export default {
     directions: 'راستہ',
     directionsSub: 'نقشے میں کھولیں',
     calendar: 'کیلنڈر میں شامل کریں',
-    calendarSub: 'اتوار، 6 دسمبر',
+    calendarSub: 'اتوار، 13 دسمبر',
     calendarApple: 'Apple Calendar / Outlook',
     calendarAppleSub: 'کیلنڈر فائل ڈاؤن لوڈ کریں',
     calendarGoogle: 'Google Calendar',
@@ -60,6 +60,7 @@ export default {
     heading: 'شرکت کی اطلاع',
     subheading: 'براہِ کرم ہمیں اپنی شرکت سے آگاہ فرمائیں',
     deadline: 'براہِ کرم {date} تک جواب دیں',
+    late: 'تاخیر سے جواب: ہم آپ سے رابطہ کر کے تصدیق کریں گے کہ آیا ہم اب بھی آپ کے لیے جگہ بنا سکتے ہیں۔',
     count: {
       one: '{households} خاندان کے {guests} مہمان',
       other: '{households} خاندانوں کے {guests} مہمان',
@@ -71,6 +72,14 @@ export default {
     },
     hint: 'کسی کو شامل کرنا ہے؟ بس نیا جواب بھیج دیجیے — یہ آپ کے پچھلے جواب کی جگہ لے لے گا۔',
     demo: 'ڈیمو موڈ — جوابات صرف اسی براؤزر میں محفوظ ہوتے ہیں۔',
+  },
+
+  // Side choice on a link without ?side= (2_main_idea issue 16). Names stay in Latin script.
+  sideChoice: {
+    label: 'آپ کس کے مہمان ہیں؟',
+    asmat: 'Asmat کے مہمان',
+    saima: 'Saima کے مہمان',
+    required: 'براہِ کرم منتخب کریں کہ آپ کس کے مہمان ہیں۔',
   },
 
   form: {
@@ -98,6 +107,13 @@ export default {
     optional: 'اختیاری',
     submit: 'جواب بھیجیں',
     sending: 'بھیجا جا رہا ہے…',
+    category: {
+      legend: 'مرد، خاتون یا 0–3 سال کا بچہ',
+      man: 'مرد',
+      woman: 'خاتون',
+      infant: 'بچہ 0–3 سال',
+      hint: '4 سال یا اس سے بڑے بچوں کے لیے مرد یا خاتون منتخب کریں۔',
+    },
     honeypot: 'یہ خانہ خالی چھوڑ دیں',
   },
 
@@ -106,6 +122,7 @@ export default {
     email: 'براہِ کرم درست ای میل پتا درج کریں۔',
     phone: `براہِ کرم ایسا فون نمبر درج کریں جو ${LTR('07')} یا ${LTR('+')} سے شروع ہو۔`,
     tooLong: 'یہ کچھ زیادہ طویل ہے۔',
+    category: 'براہِ کرم مرد، خاتون یا 0–3 سال کا بچہ منتخب کریں۔',
     fixErrors: 'براہِ کرم نشان زدہ خانے دیکھ لیں۔',
   },
 

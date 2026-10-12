@@ -196,7 +196,7 @@
 }
 .rsvp-tabs__tab:hover { color: var(--ink); }
 .rsvp-tabs__tab.is-active { color: var(--gold-deep); }
-.rsvp-tabs__tab:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.rsvp-tabs__tab:focus-visible { outline: 2px solid transparent; outline-offset: 2px; box-shadow: var(--focus-ring); }
 /* Without JS measurement (first paint) the active tab still reads as selected */
 .rsvp-tabs:not(:has(.is-placed)) .rsvp-tabs__tab.is-active { background: var(--paper); box-shadow: inset 0 0 0 1px var(--gold); }
 :root:lang(ur) .rsvp-tabs__tab { line-height: 1.7; font-size: var(--fs-sm); }
@@ -215,6 +215,27 @@
 .rsvp__hint-icon svg, .rsvp__demo-icon svg { display: block; inline-size: 100%; block-size: 100%; }
 :root:lang(th) .rsvp__hint, :root:lang(ur) .rsvp__hint { font-style: normal; }
 :root:lang(ur) .rsvp__hint { line-height: 1.9; }
+
+/* Late-reply notice at the top of the "We're coming" panel (after the deadline, issue 14) */
+.rsvp__late {
+  display: block;
+  margin: 0 auto var(--s-5);
+  max-inline-size: 32em;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--gold-pale);
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: var(--fs-sm);
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ink);
+  text-align: center; text-wrap: balance;
+}
+.rsvp__late[hidden] { display: none; }
+.rsvp__late-icon { display: inline-block; vertical-align: -0.16em; inline-size: 1.05em; block-size: 1.05em; margin-inline-end: var(--s-2); color: var(--gold); }
+.rsvp__late-icon svg { display: block; inline-size: 100%; block-size: 100%; }
+:root:lang(th) .rsvp__late, :root:lang(ur) .rsvp__late { font-style: normal; }
+:root:lang(ur) .rsvp__late { line-height: 1.9; }
 
 .rsvp-panel { margin-block-start: var(--s-5); }
 .rsvp-panel:focus { outline: none; }
@@ -333,6 +354,94 @@
 [dir="rtl"] .rsvp-field.is-invalid .rsvp-input { box-shadow: inset -3px 0 0 var(--danger); }
 .rsvp-field.is-invalid .rsvp-input:focus { box-shadow: 0 0 0 3px rgba(155, 59, 47, 0.22); }
 
+/* ── Category: Man · Woman · Child 0–3 (issue 17) ────────────────────────
+   Native radios in a fieldset (radiogroup semantics, arrow keys, RTL for free), drawn as one segmented pill. */
+.rsvp-field--category { margin-block-start: var(--s-4); }
+.rsvp-seg { margin: 0; padding: 0; border: 0; min-inline-size: 0; }
+.rsvp-seg__track {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: var(--rose);
+  box-shadow: inset 0 1px 2px rgba(74, 59, 34, 0.06);
+}
+.rsvp-seg__opt {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  min-block-size: 44px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: max(16px, 1.08rem);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+.rsvp-seg__opt + .rsvp-seg__opt::before {   /* hairline between unchosen options */
+  content: ''; position: absolute; inset-block: 25%; inset-inline-start: 0; inline-size: 1px; background: var(--gold-pale);
+}
+.rsvp-seg__opt:has(.rsvp-seg__input:checked)::before, .rsvp-seg__opt:has(.rsvp-seg__input:checked) + .rsvp-seg__opt::before { opacity: 0; }
+.rsvp-seg__input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.rsvp-seg__opt:hover { color: var(--ink); background: var(--paper); }
+.rsvp-seg__opt:has(.rsvp-seg__input:checked) {
+  color: var(--paper);
+  background: var(--gold-deep); background-image: var(--gold-grad);
+  box-shadow: var(--shadow-sm);
+  text-shadow: 0 1px 0 rgba(74, 59, 34, 0.35);
+}
+.rsvp-seg__opt:has(.rsvp-seg__input:focus-visible) { box-shadow: var(--focus-ring); }
+.rsvp-seg__text { position: relative; pointer-events: none; }
+:root:lang(ur) .rsvp-seg__opt { line-height: 1.7; font-size: max(16px, 1rem); }
+:root:lang(th) .rsvp-seg__opt { font-size: max(16px, 1rem); }
+.rsvp-field--category.is-invalid .rsvp-seg__track { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+.rsvp-member__category { grid-area: cat; }
+.rsvp-member .rsvp-field--category { margin-block-start: var(--s-1); }
+.rsvp-member .rsvp-seg__opt { min-block-size: 42px; }
+.rsvp-group__note--category { margin-block-start: calc(-1 * var(--s-3)); font-style: italic; }
+@container rsvp (max-width: 300px) {
+  .rsvp-seg__opt { font-size: 15px; padding-inline: 0.25rem; }
+}
+
+/* ── Side choice (bare link, issue 16) — a two-option segmented control like the tabs ── */
+.rsvp-side { margin-block-end: var(--s-4); }
+.rsvp-side__opts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--gold-pale);
+  border-radius: 999px;
+  background: var(--cream-deep);
+  box-shadow: inset 0 1px 3px rgba(74, 59, 34, 0.08);
+}
+.rsvp-side__opt {
+  display: flex; align-items: center; justify-content: center;
+  min-block-size: 48px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent; border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: 600 var(--fs-md)/1.15 var(--font-ui);
+  text-align: center; text-wrap: balance;
+  cursor: pointer;
+  transition: color var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+.rsvp-side__opt:hover { color: var(--ink); }
+.rsvp-side__opt[aria-checked='true'] { background: var(--paper); border-color: var(--gold); color: var(--gold-deep); box-shadow: var(--shadow-sm); }
+/* transparent outline: invisible normally (the ring shows), painted in forced-colors mode where box-shadow is dropped */
+.rsvp-side__opt:focus-visible { outline: 2px solid transparent; outline-offset: 2px; box-shadow: var(--focus-ring); }
+.rsvp-side.is-invalid .rsvp-side__opts { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+:root:lang(ur) .rsvp-side__opt { line-height: 1.7; font-size: var(--fs-sm); }
+@media (forced-colors: active) {
+  .rsvp-side__opts { border-color: CanvasText; }
+  .rsvp-side__opt[aria-checked='true'] { border-color: Highlight; color: Highlight; }
+  .rsvp-side__opt:focus-visible { outline: 2px solid Highlight; }
+}
+
 /* Honeypot: off-screen, unreachable */
 .rsvp-hp { position: absolute !important; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; inset-inline-start: -9999px; }
 .rsvp-visually-hidden { position: absolute !important; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -345,7 +454,7 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-areas: "head remove" "fields fields";
+  grid-template-areas: "head remove" "fields fields" "cat cat";
   align-items: center;
   gap: var(--s-2) var(--s-2);
   padding: var(--s-3) var(--s-3) var(--s-4);
@@ -403,7 +512,7 @@
 @container rsvp (min-width: 430px) {
   .rsvp-member {
     grid-template-columns: auto 1fr auto;
-    grid-template-areas: "head fields remove";
+    grid-template-areas: "head fields remove" ". cat .";
     align-items: end;
     padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
     gap: var(--s-3);
@@ -593,6 +702,8 @@
 }
 .rsvp-check__box svg { position: absolute; inline-size: 20px; block-size: 20px; opacity: 0; }
 .rsvp-check__text { min-inline-size: 0; overflow-wrap: anywhere; }
+/* Category beside a name that appears twice in the Party (cancel list): "Sara Khan  Woman". */
+.rsvp-check__tag { flex: none; margin-inline-start: auto; font-family: var(--font-ui); font-size: 0.85em; color: var(--ink-soft); }
 .rsvp-check__input:focus-visible + .rsvp-check__box { box-shadow: var(--focus-ring); }
 .rsvp-check:has(.rsvp-check__input:focus-visible) { border-color: var(--gold-deep); }
 
@@ -688,6 +799,9 @@
   overflow-wrap: anywhere;
 }
 .rsvp-done.is-in .rsvp-party__name { animation: rsvp-fade-up var(--dur-slow) var(--ease-out) both; animation-delay: calc(900ms + var(--i, 0) * 60ms); }
+.rsvp-party__cat { flex: none; font-size: 0.8em; font-style: italic; color: var(--ink-soft); }
+:root:lang(th) .rsvp-party__cat, :root:lang(ur) .rsvp-party__cat { font-style: normal; }
+.rsvp-party__cat::before { content: '('; } .rsvp-party__cat::after { content: ')'; }
 .rsvp-party__bullet { flex: none; inline-size: 14px; block-size: 14px; color: var(--gold); }
 .rsvp-party__bullet svg { display: block; inline-size: 100%; block-size: 100%; }
 .rsvp-party__list.is-gone .rsvp-party__name { color: var(--ink-soft); }
@@ -750,6 +864,7 @@
   .rsvp-input, .rsvp-check__box, .rsvp-tabs__pill { border-color: CanvasText; }
   .rsvp__title { -webkit-text-fill-color: CanvasText; background: none; }
   .rsvp-check__input:checked + .rsvp-check__box { background: Highlight; }
+  .rsvp-tabs__tab:focus-visible { outline: 2px solid Highlight; }
 }
 
 /* Tab labels break only at " / " (see renderTabLabel) */

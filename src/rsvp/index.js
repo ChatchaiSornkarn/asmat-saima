@@ -1,4 +1,4 @@
-// RSVP section — heading, deadline, public count, demo notice, tabs (attend | cancel).
+// RSVP section — heading, deadline, public count, demo notice, tabs (attend | cancel), late-reply notice.
 // Public API: mountRsvp(el, config)
 import { t, formatDate, onLangChange } from '../i18n/index.js';
 import { h, setText, retranslate, session } from './dom.js';
@@ -7,6 +7,8 @@ import { createAttend } from './attend.js';
 import { createCancel } from './cancel.js';
 import { createCount } from './count.js';
 import { divider, icons } from './ornaments.js';
+import { isOpen, isLate } from './deadline.js';
+import { sideFromUrl } from './side.js';
 
 const TAB_KEY = 'asmat-saima-rsvp-tab';
 const TABS = ['attend', 'cancel'];
@@ -14,6 +16,9 @@ const TABS = ['attend', 'cancel'];
 export function mountRsvp(el, config) {
   if (!el) return;
   const api = createApi(config);
+  // Which family's link the guest opened (?side=asmat | ?side=saima, issue 15). Read once here, never shown,
+  // sent with attend replies only ('' = bare or invalid link → the attend form asks, issue 16).
+  const side = sideFromUrl();
 
   // ── Header ───────────────────────────────────────────────────────────────
   const deadline = h('p', { class: 'rsvp__deadline', hidden: true });
@@ -28,12 +33,23 @@ export function mountRsvp(el, config) {
 
   function renderDeadline() {
     const iso = config.rsvpDeadline;
-    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) { deadline.hidden = true; return; }
+    // Shown until the end of the deadline day, Göteborg time (2_main_idea Q9).
+    if (!isOpen(iso, config.timeZone)) { deadline.hidden = true; return; }
     let date;
     try { date = formatDate(String(iso), { day: 'numeric', month: 'long', year: 'numeric' }); } catch { deadline.hidden = true; return; }
     setText(deadline, 'rsvp.deadline', { date });
     deadline.hidden = false;
   }
+
+  // After the deadline the "We're coming" form stays open, with this notice on top (2_main_idea Q9, issue 14).
+  // The script flags the row late = TRUE by its own copy of the deadline.
+  const late = h('p', { class: 'rsvp__late', role: 'note', hidden: true },
+    h('span', { class: 'rsvp__late-icon', html: icons.info }), h('span', { i18n: 'rsvp.late' }));
+  function renderLate() {
+    late.hidden = !isLate(config.rsvpDeadline, config.timeZone);
+  }
+  // Re-checked whenever the tab is shown or the language changes, so a page left open over midnight catches up.
+  function renderNotices() { renderDeadline(); renderLate(); }
 
   // ── Tabs ─────────────────────────────────────────────────────────────────
   // "Cancel / can't come" must break after the slash, never before it (and never mid-phrase),
@@ -63,9 +79,9 @@ export function mountRsvp(el, config) {
   const hint = h('p', { class: 'rsvp__hint' }, h('span', { class: 'rsvp__hint-icon', html: icons.info }), h('span', { i18n: 'rsvp.hint' }));
 
   const count$ = () => count.refresh();
-  const attend = createAttend({ api, config, onSuccess: count$ });
+  const attend = createAttend({ api, config, side, onSuccess: count$ });
   const cancel = createCancel({ api, onSuccess: count$ });
-  panels.attend.append(attend.el);
+  panels.attend.append(late, attend.el);
   panels.cancel.append(cancel.el);
 
   const demo = api.demo
@@ -99,6 +115,7 @@ export function mountRsvp(el, config) {
     }
     if (focusTab) tabs[name].focus();
     session.set(TAB_KEY, name);
+    renderNotices();
     placePill(user);
   }
 
@@ -138,7 +155,7 @@ export function mountRsvp(el, config) {
   onLangChange(() => {
     retranslate(card);
     renderTabs();
-    renderDeadline();
+    renderNotices();
     count.render();
     attend.refresh();
     cancel.refresh();
@@ -146,7 +163,7 @@ export function mountRsvp(el, config) {
   });
 
   // ── Init ─────────────────────────────────────────────────────────────────
-  renderDeadline();
+  renderNotices();
   // A link to #rsvp-cancel / #rsvp-attend opens that tab; otherwise the guest's last tab this session.
   const fromHash = () => { const m = /^#rsvp-(attend|cancel)$/.exec(location.hash); return m && m[1]; };
   select(fromHash() || session.get(TAB_KEY) || 'attend');

@@ -14,13 +14,14 @@ function safeLocalStorage() {
 }
 
 /**
- * @param {object} config  site config (appsScriptUrl, maxPartySize)
- * @param {object} [opts]  { fetch, timeout } — injectable for tests
+ * @param {object} config  site config (appsScriptUrl, maxPartySize, rsvpDeadline, timeZone)
+ * @param {object} [opts]  { fetch, timeout, storage, latency, now } — injectable for tests
  */
 export function createApi(config, opts = {}) {
   const url = String(config?.appsScriptUrl || '').trim();
   if (!url) {
-    const mock = createMock({ storage: opts.storage ?? (typeof window !== 'undefined' ? safeLocalStorage() : undefined), maxPartySize: config?.maxPartySize ?? 20, latency: opts.latency });
+    const mock = createMock({ storage: opts.storage ?? (typeof window !== 'undefined' ? safeLocalStorage() : undefined), maxPartySize: config?.maxPartySize ?? 20, latency: opts.latency,
+      rsvpDeadline: config?.rsvpDeadline ?? null, timeZone: config?.timeZone || 'Europe/Stockholm', now: opts.now });
     if (typeof location !== 'undefined') {
       const q = new URLSearchParams(location.search);
       if (q.get('demo') === 'reset') {

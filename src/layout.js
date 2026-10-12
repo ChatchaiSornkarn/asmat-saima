@@ -117,7 +117,8 @@ function calendarStrings(config) {
   return {
     title: t('actions.eventTitle'),
     description: [t('actions.eventDetails'), venue].filter(Boolean).join('\n\n'),
-    location: config.venue?.mapQuery,
+    // Venue name first, then the street address so calendar apps can still navigate there.
+    location: [config.venue?.line1, config.venue?.mapQuery].filter(Boolean).join(', '),
     url: siteUrl(),
     lang: getLang(),
   };

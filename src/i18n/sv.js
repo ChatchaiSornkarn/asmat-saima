@@ -6,8 +6,8 @@
 
 export default {
   meta: {
-    title: 'Asmat & Saima · Nikah · 6 december 2026',
-    description: 'Varmt välkomna till Asmat & Saimas nikah – söndagen den 6 december 2026 i Göteborg.',
+    title: 'Asmat & Saima · Nikah · 13 december 2026',
+    description: 'Varmt välkomna till Asmat & Saimas nikah – söndagen den 13 december 2026 i Göteborg.',
   },
 
   switcher: {
@@ -25,7 +25,7 @@ export default {
     invitedTo: 'Ni är varmt välkomna till',
     nikah: 'Nikah',
     of: 'mellan',
-    date: 'Söndagen den 6 december 2026',
+    date: 'Söndagen den 13 december 2026',
     time: 'kl. {time}',
     mapAria: 'Visa adressen på kartan',
   },
@@ -40,7 +40,7 @@ export default {
     directions: 'Vägbeskrivning',
     directionsSub: 'Öppna i kartappen',
     calendar: 'Lägg till i kalendern',
-    calendarSub: 'Söndag 6 december',
+    calendarSub: 'Söndag 13 december',
     calendarApple: 'Apple Kalender / Outlook',
     calendarAppleSub: 'Ladda ned .ics-fil',
     calendarGoogle: 'Google Kalender',
@@ -55,6 +55,7 @@ export default {
     heading: 'OSA',
     subheading: 'Berätta gärna om ni har möjlighet att komma',
     deadline: 'OSA senast {date}',
+    late: 'Sent svar: vi återkommer till dig och bekräftar om vi fortfarande har plats för er.',
     count: {
       one: '{guests} gäster från {households} familj',
       other: '{guests} gäster från {households} familjer',
@@ -66,6 +67,14 @@ export default {
     },
     hint: 'Vill du lägga till någon? Skicka bara ett nytt svar – det ersätter ditt tidigare.',
     demo: 'Demoläge – svaren sparas bara i den här webbläsaren.',
+  },
+
+  // Side choice on a link without ?side= (2_main_idea issue 16). Names stay in Latin script.
+  sideChoice: {
+    label: 'Vems gäst är du?',
+    asmat: 'Asmats gäst',
+    saima: 'Saimas gäst',
+    required: 'Välj vems gäst du är.',
   },
 
   form: {
@@ -93,6 +102,13 @@ export default {
     optional: 'valfritt',
     submit: 'Skicka svar',
     sending: 'Skickar…',
+    category: {
+      legend: 'Man, kvinna eller barn 0–3',
+      man: 'Man',
+      woman: 'Kvinna',
+      infant: 'Barn 0–3',
+      hint: 'Barn som är 4 år eller äldre: välj man eller kvinna.',
+    },
     honeypot: 'Lämna det här fältet tomt',
   },
 
@@ -101,6 +117,7 @@ export default {
     email: 'Ange en giltig e-postadress.',
     phone: 'Ange ett telefonnummer som börjar med 07 eller +.',
     tooLong: 'Det här blev lite för långt.',
+    category: 'Välj man, kvinna eller barn 0–3.',
     fixErrors: 'Kontrollera de markerade fälten.',
   },
 

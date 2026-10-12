@@ -161,6 +161,45 @@ function nameList_(names, t, opts) {
   }).join('');
 }
 
+/**
+ * The attend party list with each person's category in the guest's language (issue 17): "Sara Khan (woman)".
+ * The line follows the email's direction; the name is isolated (dir="auto") so a Latin name inside Urdu text,
+ * or an Urdu name inside English, keeps its own direction and the brackets land in the right place.
+ */
+function peopleList_(people, S, t) {
+  return people.map(function (p) {
+    var cat = p.category && S.category[p.category];
+    return '<div dir="' + S.dir + '" style="font-family:' + t.body + ';font-size:' + (t.bodySize + 3) + 'px;line-height:' + (t.lh === '2.2' ? '2' : '1.45') +
+      ';color:' + MAIL_.ink + ';"><span dir="auto" style="unicode-bidi:isolate;">' + esc_(p.name) + '</span>' +
+      (cat ? ' <span style="font-size:0.78em;color:' + MAIL_.muted + ';">(' + esc_(cat) + ')</span>' : '') + '</div>';
+  }).join('');
+}
+
+/** Plain-text line for peopleList_: "Sara Khan (woman)"; in Urdu the name is wrapped in FIRST STRONG ISOLATE … PDI. */
+function personText_(p, S) {
+  var cat = p.category && S.category[p.category];
+  var name = S.dir === 'rtl' ? '\u2068' + p.name + '\u2069' : p.name;
+  return cat ? name + ' (' + cat + ')' : p.name;
+}
+
+/** People of an event: ev.people ([{ name, category }]) or, for older callers, plain ev.names. */
+function peopleOf_(ev) {
+  if (Array.isArray(ev.people)) return ev.people;
+  return (ev.names || []).map(function (n) { return { name: n, category: '' }; });
+}
+
+/** People cancelled: ev.cancelledPeople ([{ name, category }], issue 18) or, for older callers, plain ev.cancelled. */
+function cancelledPeopleOf_(ev) {
+  if (Array.isArray(ev.cancelledPeople)) return ev.cancelledPeople;
+  return (ev.cancelled || []).map(function (n) { return { name: n, category: '' }; });
+}
+
+/** "1 man · 2 women · 1 infant (0–3)" for the owner email. */
+function countsText_(c) {
+  var part = function (n, one, many) { return n + ' ' + (n === 1 ? one : many); };
+  return part(c.men, 'man', 'men') + ' · ' + part(c.women, 'woman', 'women') + ' · ' + part(c.infants, 'infant', 'infants') + ' (0–3)';
+}
+
 function panel_(inner) {
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>' +
     '<td class="panel" style="background:' + MAIL_.panel + ';border:1px solid ' + MAIL_.hair + ';border-radius:10px;padding:20px 22px;text-align:center;">' +
@@ -198,9 +237,15 @@ function mapsUrl_(cfg) {
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(cfg.mapQuery);
 }
 
-function siteUrlFor_(cfg, lang) {
+/**
+ * "View the invitation" link: ?lang=xx, plus &side=asmat|saima when the Party has a valid side, so a guest who
+ * replies again from the email keeps their family's side instead of being asked (issue 16).
+ */
+function siteUrlFor_(cfg, lang, side) {
   var u = cfg.siteUrl || '';
-  return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + encodeURIComponent(lang);
+  var url = u + (u.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + encodeURIComponent(lang);
+  if (SIDES.indexOf(side) >= 0) url += '&side=' + side;
+  return url;
 }
 
 /** The full HTML document: page background, card, arched gold frame around `inner`, footer under the card. */
@@ -250,7 +295,8 @@ function guestVariant_(ev) {
 }
 
 /**
- * @param ev  { kind:'attend'|'cancel', lang, email, greetName, names, cancelled?, remaining?, status?, message, replaces }
+ * @param ev  { kind:'attend'|'cancel', lang, email, greetName, names, people?: [{name, category}], counts?, cancelled?, cancelledPeople?, remaining?,
+ *              status?, message, replaces }
  * @returns {{ subject, html, text }}
  */
 function renderGuestEmail_(ev, cfg) {
@@ -262,7 +308,7 @@ function renderGuestEmail_(ev, cfg) {
   var subject = variant === 'attend' ? (replaced ? S.subject.attendUpdated : S.subject.attend) : S.subject[variant];
   var dateText = formatEventDate_(cfg.eventDate, lang);
   var timeText = cfg.eventTime ? fill_(S.time, { time: cfg.eventTime }) : '';
-  var site = siteUrlFor_(cfg, lang);
+  var site = siteUrlFor_(cfg, lang, ev.side);
   var maps = mapsUrl_(cfg);
   var greetName = ev.greetName || (ev.names && ev.names[0]) || '';
   var greeting = greetName ? fill_(S.greeting, { name: greetName }) : '';
@@ -278,11 +324,12 @@ function renderGuestEmail_(ev, cfg) {
   h += para_(esc_(S.intro[variant]), t) + spacer_(22);
 
   if (variant === 'attend') {
-    h += panel_(caps_(S.partyHeading, t) + countLine_(S.guests(ev.names.length), t, lang) + spacer_(10) + nameList_(ev.names, t));
+    h += panel_(caps_(S.partyHeading, t) + countLine_(S.guests(ev.names.length), t, lang) + spacer_(10) + peopleList_(peopleOf_(ev), S, t));
     if (replaced) h += spacer_(12) + para_(esc_(S.replaced), t, 'font-size:15px;font-style:italic;color:' + MAIL_.muted + ';');
+    if (ev.late) h += spacer_(12) + para_(esc_(S.late), t, 'font-size:15px;color:' + MAIL_.ink + ';' + (lang === 'en' || lang === 'sv' ? 'font-style:italic;' : ''));
   } else if (variant === 'partial') {
     h += panel_(
-      caps_(S.remainingHeading, t) + countLine_(S.guests(ev.remaining.length), t, lang) + spacer_(10) + nameList_(ev.remaining, t) +
+      caps_(S.remainingHeading, t) + countLine_(S.guests(ev.remaining.length), t, lang) + spacer_(10) + peopleList_(peopleOf_(ev), S, t) +
       spacer_(18) + divider_('&#183;', 40) + spacer_(16) +
       caps_(S.cancelledHeading, t, MAIL_.muted) + spacer_(8) + nameList_(ev.cancelled, t, { muted: true, italic: lang === 'en' || lang === 'sv' }));
   } else {
@@ -332,12 +379,13 @@ function renderGuestEmail_(ev, cfg) {
   L.push('');
   if (variant === 'attend') {
     L.push(S.partyHeading + ' (' + S.guests(ev.names.length) + '):');
-    ev.names.forEach(function (n) { L.push('  • ' + n); });
+    peopleOf_(ev).forEach(function (p) { L.push('  • ' + personText_(p, S)); });
     if (replaced) { L.push(''); L.push(S.replaced); }
+    if (ev.late) { L.push(''); L.push(S.late); }
   } else {
     if (variant === 'partial') {
       L.push(S.remainingHeading + ' (' + S.guests(ev.remaining.length) + '):');
-      ev.remaining.forEach(function (n) { L.push('  • ' + n); });
+      peopleOf_(ev).forEach(function (p) { L.push('  • ' + personText_(p, S)); });
       L.push('');
     }
     L.push(S.cancelledHeading + ':');
@@ -371,6 +419,16 @@ function renderGuestEmail_(ev, cfg) {
 
 var LANG_NAMES_ = { en: 'English', sv: 'Swedish', th: 'Thai', ur: 'Urdu' };
 
+/**
+ * Owner-email wording for the Party's Side (issue 15). Every attend reply has one (issue 16: the link's ?side=
+ * or the guest's choice); '' only shows up on a cancel of a row from before issue 16, or of a cell cleared by hand.
+ */
+function sideLabel_(side) {
+  if (side === 'asmat') return 'Asmat’s side';
+  if (side === 'saima') return 'Saima’s side';
+  return 'Not given (empty side cell)';
+}
+
 function renderOwnerEmail_(ev, cfg) {
   var t = typeFor_('en');
   var variant = guestVariant_(ev);
@@ -380,6 +438,8 @@ function renderOwnerEmail_(ev, cfg) {
     kicker = ev.replaces ? 'Updated RSVP' : 'New RSVP';
     headline = ev.names.length === 1 ? lead + ' is coming' : lead + ' + ' + (ev.names.length - 1) + ' ' + (ev.names.length === 2 ? 'guest' : 'guests') + ' are coming';
     subject = 'RSVP · ' + (ev.replaces ? 'Updated' : 'Attending') + ' · ' + lead + ' (' + ev.names.length + ')';
+    // Late attend replies (issue 14): the subject STARTS with "LATE" so they stand out (and can be filtered).
+    if (ev.late) { subject = 'LATE · ' + subject; kicker = 'Late ' + kicker.charAt(0).toLowerCase() + kicker.slice(1); }
   } else if (variant === 'partial') {
     kicker = 'Partial cancellation';
     headline = ev.cancelled.length + ' cancelled · ' + ev.remaining.length + ' still coming';
@@ -398,12 +458,21 @@ function renderOwnerEmail_(ev, cfg) {
       return '<div dir="auto" style="' + (muted ? 'color:' + MAIL_.muted + ';font-style:italic;' : '') + '">' + esc_(n) + '</div>';
     }).join('') : '<span style="color:' + MAIL_.muted + ';">—</span>';
   };
-  if (variant === 'attend') rows.push(['Party (' + ev.names.length + ')', listHtml(ev.names)]);
-  if (variant === 'partial') rows.push(['Still coming (' + ev.remaining.length + ')', listHtml(ev.remaining)]);
-  if (variant !== 'attend') rows.push(['Cancelled (' + ev.cancelled.length + ')', listHtml(ev.cancelled, true)]);
+  var EN = EMAIL_STRINGS.en;
+  var withCategory = function (p) { return p.category ? p.name + ' (' + EN.category[p.category] + ')' : p.name; };
+  var tagged = peopleOf_(ev).map(withCategory);
+  var cancelledTagged = cancelledPeopleOf_(ev).map(withCategory);
+  var countsLine = ev.counts && variant !== 'cancelled' ? countsText_(ev.counts) : '';
+  if (variant === 'attend') rows.push(['Party (' + ev.names.length + ')', listHtml(tagged)]);
+  if (variant === 'partial') rows.push(['Still coming (' + ev.remaining.length + ')', listHtml(tagged)]);
+  if (countsLine) rows.push(['Men · Women · Infants', '<strong>' + esc_(countsLine) + '</strong>']);
+  if (variant !== 'attend') rows.push(['Cancelled (' + ev.cancelled.length + ')', listHtml(cancelledTagged, true)]);
+  rows.push(['Side', ev.side ? '<strong>' + esc_(sideLabel_(ev.side)) + '</strong>' : '<span style="color:' + MAIL_.muted + ';">' + esc_(sideLabel_(ev.side)) + '</span>']);
   rows.push(['Email', '<a href="mailto:' + esc_(ev.email) + '" style="color:' + MAIL_.ink + ';">' + esc_(ev.email) + '</a>']);
   rows.push(['Phone', '<a href="tel:' + esc_(ev.phone) + '" style="color:' + MAIL_.ink + ';" dir="ltr">' + esc_(ev.phone) + '</a>']);
   rows.push(['Language', esc_((LANG_NAMES_[ev.lang] || ev.lang) + ' (' + ev.lang + ')')]);
+  var lateText = ev.late ? 'LATE — after the reply-by date (' + (ev.deadline || cfg.rsvpDeadline) + '). Confirm with the guest whether you can still fit them in.' : '';
+  if (lateText) rows.push(['Late', '<strong style="color:' + MAIL_.gold + ';">' + esc_(lateText) + '</strong>']);
   rows.push(['Message', ev.message ? '<div dir="auto" style="font-style:italic;">' + escMultiline_(ev.message) + '</div>' : '<span style="color:' + MAIL_.muted + ';">—</span>']);
   var prev = (ev.previous || []).map(function (p) { return 'row ' + p.rowNum + ' (' + p.names.join(', ') + ')'; }).join('; ');
   rows.push(['Sheet', 'Row ' + ev.rowNum + (prev ? '<br><span style="color:' + MAIL_.muted + ';">Replaces ' + esc_(prev) + '</span>' : '')]);
@@ -433,13 +502,16 @@ function renderOwnerEmail_(ev, cfg) {
   var html = shell_({ lang: 'en', dir: 'ltr', title: subject, preheader: headline + ' — ' + totals, inner: h, footer: footer, footerFont: MAIL_.serif });
 
   var L = [kicker.toUpperCase(), headline, totals, ''];
-  if (variant === 'attend') { L.push('Party (' + ev.names.length + '):'); ev.names.forEach(function (n) { L.push('  • ' + n); }); }
-  if (variant === 'partial') { L.push('Still coming (' + ev.remaining.length + '):'); ev.remaining.forEach(function (n) { L.push('  • ' + n); }); }
-  if (variant !== 'attend') { L.push('Cancelled (' + ev.cancelled.length + '):'); ev.cancelled.forEach(function (n) { L.push('  • ' + n); }); }
+  if (variant === 'attend') { L.push('Party (' + ev.names.length + '):'); tagged.forEach(function (n) { L.push('  • ' + n); }); }
+  if (variant === 'partial') { L.push('Still coming (' + ev.remaining.length + '):'); tagged.forEach(function (n) { L.push('  • ' + n); }); }
+  if (countsLine) L.push('Men / women / infants: ' + countsLine);
+  if (variant !== 'attend') { L.push('Cancelled (' + ev.cancelled.length + '):'); cancelledTagged.forEach(function (n) { L.push('  • ' + n); }); }
   L.push('');
+  L.push('Side: ' + sideLabel_(ev.side));
   L.push('Email: ' + ev.email);
   L.push('Phone: ' + ev.phone);
   L.push('Language: ' + (LANG_NAMES_[ev.lang] || ev.lang) + ' (' + ev.lang + ')');
+  if (lateText) L.push('Late: ' + lateText);
   L.push('Message: ' + (ev.message || '—'));
   L.push('Sheet row: ' + ev.rowNum + (prev ? ' — replaces ' + prev : ''));
   if (ev.note) L.push('Note: ' + ev.note);
@@ -459,15 +531,18 @@ function sampleEvents_() {
     th: { email: 'somchai@example.co.th', names: ['สมชาย ใจดี', 'สุภาพร ใจดี', 'Anna Jaidee'], msg: 'ขอแสดงความยินดีล่วงหน้าด้วยนะคะ' },
     ur: { email: 'ayesha@example.pk', names: ['عائشہ خان', 'عمر خان', 'Zainab Khan'], msg: 'مبارک ہو! ہم ضرور حاضر ہوں گے۔' },
   };
+  var cats = ['woman', 'man', 'infant'];   // Main guest, member 2, member 3 (issue 17)
   var out = [];
   LANGS.forEach(function (lang) {
     var p = people[lang];
-    var base = { lang: lang, email: p.email, phone: '+46701234567', greetName: p.names[0].split(' ')[0], rowNum: 12,
+    var party = p.names.map(function (n, i) { return { name: n, category: cats[i] }; });
+    var base = { lang: lang, side: lang === 'ur' ? 'saima' : 'asmat', email: p.email, phone: '+46701234567', greetName: p.names[0].split(' ')[0], rowNum: 12,
       totals: { guests: 42, households: 15 }, sheetUrl: 'https://docs.google.com/spreadsheets/d/EXAMPLE/edit#gid=0' };
-    out.push(merge_(base, { kind: 'attend', names: p.names, message: p.msg, replaces: '', note: '', previous: [] }));
+    out.push(merge_(base, { kind: 'attend', names: p.names, people: party, counts: countCategories_(party), message: p.msg, replaces: '', note: '', previous: [] }));
     out.push(merge_(base, { kind: 'cancel', names: p.names.slice(0, 2), cancelled: [p.names[2]], remaining: p.names.slice(0, 2),
+      people: party.slice(0, 2), counts: countCategories_(party.slice(0, 2)), cancelledPeople: party.slice(2),
       status: 'active', message: '', replaces: '12', note: 'Cancelled: ' + p.names[2], previous: [{ rowNum: 12, names: p.names }] }));
-    out.push(merge_(base, { kind: 'cancel', names: [], cancelled: p.names, remaining: [], status: 'cancelled', message: '',
+    out.push(merge_(base, { kind: 'cancel', names: [], cancelled: p.names, remaining: [], people: [], cancelledPeople: party, status: 'cancelled', message: '',
       replaces: '12', note: 'Cancelled everyone: ' + p.names.join(', '), previous: [{ rowNum: 12, names: p.names }] }));
   });
   return out;

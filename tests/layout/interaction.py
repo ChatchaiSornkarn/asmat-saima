@@ -71,7 +71,7 @@ with sync_playwright() as pw:
     check(btn.get_attribute('aria-expanded') == 'false', 'aria-expanded=false after close')
     check(p.evaluate("document.activeElement.getAttribute('aria-controls')") == 'calendar-dialog', 'focus returns to button')
     href = p.locator('[data-cal=google]').get_attribute('href')
-    check('dates=20261206%2F20261207' in href or 'dates=20261206/20261207' in href, 'Google link has all-day dates')
+    check('dates=20261213%2F20261214' in href or 'dates=20261213/20261214' in href, 'Google link has all-day dates')
     # .ics download
     btn.click()
     p.wait_for_timeout(400)
@@ -81,7 +81,7 @@ with sync_playwright() as pw:
     path = dl.value.path()
     ics = open(path, 'rb').read().decode('utf-8')
     check(dl.value.suggested_filename.endswith('.ics'), f'download filename {dl.value.suggested_filename}')
-    check('DTSTART;VALUE=DATE:20261206' in ics and '\r\n' in ics, '.ics content is all-day with CRLF')
+    check('DTSTART;VALUE=DATE:20261213' in ics and '\r\n' in ics, '.ics content is all-day with CRLF')
     p.wait_for_timeout(500)
     check(not p.evaluate("document.getElementById('calendar-dialog').open"), 'menu closes after download')
     check(not errs, f'no console errors in calendar flow {errs[:2]}')

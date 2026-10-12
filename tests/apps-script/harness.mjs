@@ -47,6 +47,17 @@ function lenient(target, log, name) {
 
 const isDate = (v) => Object.prototype.toString.call(v) === '[object Date]';
 
+/**
+ * Utilities.formatDate(date, timeZone, pattern) for the SimpleDateFormat letters the script uses
+ * (yyyy MM dd HH mm ss), computed in `timeZone` like Apps Script does.
+ */
+function formatDateMock(d, tz, fmt) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(d.getTime())).map((p) => [p.type, p.value]));
+  return String(fmt).replace(/yyyy|MM|dd|HH|mm|ss/g, (k) => ({ yyyy: parts.year, MM: parts.month, dd: parts.day, HH: parts.hour, mm: parts.minute, ss: parts.second })[k]);
+}
+
 // ── Spreadsheet model ─────────────────────────────────────────────────────────────────────────────
 class Cell {
   constructor(value = '', formula = null, raw = undefined) { this.value = value; this.formula = formula; this.raw = raw; }
@@ -271,7 +282,7 @@ export function createBackend({ quota = 100, owner = 'owner@example.com', props 
       computeDigest: (alg, s) => Array.from(crypto.createHash(alg).update(String(s), 'utf8').digest()).map((b) => (b > 127 ? b - 256 : b)),
       base64Encode: (bytes) => Buffer.from(bytes.map((b) => b & 255)).toString('base64'),
       base64EncodeWebSafe: (bytes) => Buffer.from(bytes.map((b) => b & 255)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'),
-      formatDate: (d, tz, fmt) => d.toISOString(),
+      formatDate: (d, tz, fmt) => formatDateMock(d, tz, fmt),
       sleep: () => {},
     },
   };
@@ -279,7 +290,9 @@ export function createBackend({ quota = 100, owner = 'owner@example.com', props 
   vm.createContext(context);
   const code = files.map((f) => `// ── ${f}\n` + fs.readFileSync(path.join(SCRIPT_DIR, f), 'utf8')).join('\n;\n');
   vm.runInContext(code, context, { filename: 'apps-script.gs' });
-  if (state.now === null) { /* real clock */ }
+  // Script clock: now_() (Code.gs) follows state.now once a test sets it (setNow / advance); real time otherwise.
+  const SandboxDate = vm.runInContext('Date', context);
+  context.now_ = () => (state.now !== null ? new SandboxDate(state.now) : new SandboxDate());
 
   const toJson = (out) => {
     if (!out || typeof out.getContent !== 'function') throw new Error('handler did not return a TextOutput');
@@ -329,11 +342,23 @@ export function createBackend({ quota = 100, owner = 'owner@example.com', props 
     rawWrites: (name = 'RSVPs') => (ss.find(name)?.writes || []),
     setQuota: (n) => { state.quota = n; },
     advance: (ms) => { state.now = (state.now ?? Date.now()) + ms; },
+    /** Sets the script's clock (now_()), e.g. setNow('2026-11-06T23:00:00Z'). null = real time again. */
+    setNow: (t) => { state.now = t === null ? null : new Date(t).getTime(); },
   };
   return backend;
 }
 
-/** Attend body builder used by tests. */
-export function attendBody({ first = 'Asmat', last = 'Khan', email = 'a@x.se', phone = '070 123 45 67', members = [], message = '', lang = 'en', website = '' } = {}) {
-  return { action: 'attend', lang, main: { first, last, email, phone }, members: members.map((m) => (typeof m === 'string' ? { first: m.split(' ')[0], last: m.split(' ').slice(1).join(' ') } : m)), message, website };
+/**
+ * Attend body builder used by tests. Every body carries a side (issue 16: required; default 'asmat' — pass
+ * `side: undefined` explicitly to leave the key out) and every person gets a category (issue 17): the Main guest
+ * `category` (default 'man'), members given as strings get `memberCategory` (default 'woman'); member objects keep
+ * theirs (an object without `category` gets memberCategory too — pass `category: undefined` explicitly to leave it out).
+ */
+export function attendBody({ first = 'Asmat', last = 'Khan', email = 'a@x.se', phone = '070 123 45 67', category = 'man', memberCategory = 'woman',
+  members = [], message = '', lang = 'en', website = '', side = 'asmat' } = {}) {
+  const member = (m) => {
+    if (typeof m === 'string') return { first: m.split(' ')[0], last: m.split(' ').slice(1).join(' '), category: memberCategory };
+    return 'category' in m ? m : { ...m, category: memberCategory };
+  };
+  return { action: 'attend', lang, side, main: { first, last, email, phone, category }, members: members.map(member), message, website };
 }

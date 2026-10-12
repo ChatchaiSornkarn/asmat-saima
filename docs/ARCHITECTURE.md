@@ -81,15 +81,16 @@ and treats the send as success (`{ ok: true, opaque: true }`).
 
 ```jsonc
 // Attend
-{ "action": "attend", "lang": "sv",
-  "main": { "first": "Asmat", "last": "Khan", "email": "a@x.se", "phone": "070 123 45 67" },
-  "members": [ { "first": "Sara", "last": "Khan" } ],
+{ "action": "attend", "lang": "sv", "side": "asmat",   // side REQUIRED: 'asmat' | 'saima' — ?side= link or the guest's choice (issues 15, 16)
+  "main": { "first": "Asmat", "last": "Khan", "email": "a@x.se", "phone": "070 123 45 67", "category": "man" },
+  "members": [ { "first": "Sara", "last": "Khan", "category": "woman" } ],   // category: man | woman | infant, required
   "message": "No nuts please", "website": "" }          // website = honeypot, must be empty
-→ { "ok": true, "partySize": 2, "names": ["Asmat Khan", "Sara Khan"], "replaced": false }
+→ { "ok": true, "partySize": 2, "names": ["Asmat Khan", "Sara Khan"],
+    "people": [ { "name": "Asmat Khan", "category": "man" }, { "name": "Sara Khan", "category": "woman" } ], "replaced": false }
 
 // Cancel (partial or full)
 { "action": "cancel", "lang": "en", "email": "...", "phone": "...",
-  "cancel": ["Sara Khan"],        // exact names from lookup; or
+  "cancel": [ { "name": "Sara Khan", "category": "woman" } ],   // people from lookup (a plain "Sara Khan" also works); or
   "all": true,                    // cancel the whole Party
   "message": "", "website": "" }
 → { "ok": true, "cancelled": ["Sara Khan"], "remaining": ["Asmat Khan"], "status": "active" | "cancelled" }
@@ -98,7 +99,8 @@ and treats the send as success (`{ ok: true, opaque: true }`).
 GET (query string):
 ```
 ?action=count                         → { ok, guests, households }        (aggregates only)
-?action=lookup&email=..&phone=..      → { ok, names: [...] } | { ok:false, error:'not_found' }  (BOTH must match, Q13)
+?action=lookup&email=..&phone=..      → { ok, names: [...], people: [{ name, category }] } | { ok:false, error:'not_found' }
+                                         (BOTH must match, Q13; people is index-aligned with names, category '' if untagged)
 ```
 
 Row semantics (RSVPs tab, append-only): an attend writes `type=attend,status=active`; any matching active row (email OR phone)
@@ -106,13 +108,59 @@ becomes `superseded` and the new row's `replaces` points at it. A cancel (lookup
 `superseded` and appends `type=cancel` with the remaining members: `status=active` if anyone remains, else `cancelled`
 (`party_size=0`), with what was cancelled in `note`. Guests and Summary count **every `status=active` row** regardless of type.
 
+Late replies (2_main_idea Q9, issue 14): columns are read by header name (`RSVP_HEADERS` in `Code.gs`; a missing header is
+appended at the end of an existing sheet). The `late` column is `TRUE` on an attend row whose timestamp is after the end of
+the reply-by day in Europe/Stockholm (6 Nov 2026 ends at `2026-11-06T23:00:00Z`), else `FALSE`. The script's deadline is
+the `RSVP_DEADLINE` Script Property (default in `CONFIG_DEFAULTS`); it must equal `config.rsvpDeadline`, which drives the
+page's notice (`src/rsvp/deadline.js` → `isLate`). Late attends are accepted as usual (same response); the owner email
+subject starts with `LATE`. Cancels are always accepted; a cancel row copies the `late` value of the row it replaces.
+
+Side from the link (2_main_idea Q1, issue 15): each family sends its own link, `…/asmat-saima/?side=asmat` or
+`…/?side=saima` (any case; combines with `?lang=`, e.g. `?side=saima&lang=ur`). `src/rsvp/side.js` → `sideFromUrl()` is
+called once in `rsvp/index.js` on load and the value is passed to `createAttend` only; it is never rendered.
+`buildAttendPayload` adds `side` only when it is `asmat`/`saima`. The script stores `cleanSide_(body.side)` (`Rsvp.gs`:
+trim + lower-case, only a value in `SIDES`) in the `side` column. A cancel never carries a Side: a cancel row copies `side`
+from the row it replaces. The owner email shows a Side row ("Asmat’s side", "Saima’s side", or "Not given" for an old row
+with an empty cell); the guest email does not.
+
+Side choice on a bare link (2_main_idea Q6, issue 16): when `needsSideChoice(side)` is true (no valid `?side=`),
+`attend.js` mounts `src/rsvp/side-choice.js` → `createSideChoice()` inside the Main guest group, above the name fields —
+one per Party, never on the Cancel tab, never with a valid `?side=` link. It is a `role="radiogroup"` of two
+`role="radio"` buttons ("Asmat's guest" / "Saima's guest", i18n block `sideChoice.*`), starts empty, has one Tab stop
+(roving tabindex), and ←/→/↑/↓/Home/End move and select (←/→ mirrored in RTL, `side.js` → `sideKeyStep`); Space/Enter
+select. On submit it is validated first (`checkSide` → `sideChoice.required`): the message shows under it, the
+"check the highlighted fields" alert shows, focus moves to it, and nothing is sent. The sent side is
+`resolveSide(linkSide, chosen)` — the link wins. The choice is kept in the session draft and in "Send another".
+A new attend reply that replaces an old one stores the side of the new reply. The script **rejects** an attend body
+without a valid side (`validateAttend_` → `{ ok: false, error: 'invalid' }`: nothing written, nothing superseded, no
+email); `party_too_large` and the honeypot still win first. Cancels are unaffected. The demo mock applies the same rule.
+
+Category per person (2_main_idea Q2/Q4/Q7, issue 17): every person (Main guest and each member) carries `category`
+`man` | `woman` | `infant` (an Infant is a child 0–3 on the wedding day, labelled "Child 0–3"; children 4+ are man or
+woman). A post where any person lacks a valid category is `invalid` and writes nothing. The row's `names` cell has one line
+per person, Main guest first, tagged in English: `Ali Khan — man`, `Sara Khan — woman`, `Zain Khan — infant`; the
+`men` / `women` / `infants` columns hold the counts and `party_size = men + women + infants`. An em dash (U+2014/U+2015)
+inside a typed name becomes `-` (site and script), so ` — ` only ever separates the tag. Infants count everywhere like
+anyone else: `party_size`, the "You've added N people" line, the `maxPartySize` cap and the public count. The form control is `src/rsvp/category.js` (native radios in a
+`fieldset role=radiogroup`, starts empty); the guest email lists "Sara Khan (woman)" in the guest's language, the owner
+email adds the men / women / infants counts.
+
+Partial cancel (2_main_idea Q4, issue 18): lookup returns `people` (`{ name, category }`, parsed from the tags) next to
+the plain `names`; the cancel list shows names only, but each box is index-aligned with its person, and the post sends
+`{ name, category }` (`lookupPeople` / `cancelEntries` in `validate.js`). The server (`findPerson_`, mock `findPerson`)
+removes people one at a time, preferring an exact name + category match, else the first person with that name (plain
+names from older pages; a tag edited since the lookup). The new row keeps the remaining lines with their tags and recounts
+`men` / `women` / `infants` and `party_size` from them, so `party_size = men + women + infants`; cancelling everyone
+gives `status=cancelled`, all counts 0. A hand-typed line without a valid tag counts in `party_size` but in no category;
+when one remains, the cancel row's `note` (and so the owner email) adds `untagged names — fix counts`.
+
 Honeypot-filled posts get `{ ok: true }` but nothing is written. Phone normalisation (both sides):
 strip spaces, dashes, dots, brackets; leading `00` → `+`; leading `0` → `+46`.
 
 ### Demo mode
 When `config.appsScriptUrl` is `''`, `src/rsvp/api.js` uses an in-browser mock that implements exactly the same contract
-(stored in `localStorage` key `asmat-saima-demo`, same matching/supersede rules) and the RSVP section shows the
-`rsvp.demo` notice. `?demo=reset` clears it.
+(stored in `localStorage` key `asmat-saima-demo`, same matching/supersede rules, the same `side` column, and the same `late` flag from
+`config.rsvpDeadline`; rows also keep `people` with categories and `men` / `women` / `infants`) and the RSVP section shows the `rsvp.demo` notice. `?demo=reset` clears it.
 
 ## Dev
 

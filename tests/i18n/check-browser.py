@@ -124,15 +124,15 @@ with sync_playwright() as p:
     api = pg.evaluate("""(async () => {
       const m = await import('./src/i18n/index.js');
       const out = {};
-      await m.setLang('sv'); out.sv = [m.t('form.counter', {count: 1}), m.t('form.counter', {count: 3}), m.formatDate('2026-12-06', {weekday:'long', day:'numeric', month:'long'})];
-      await m.setLang('th'); out.th = [m.formatDate('2026-12-06'), m.t('form.counter', {count: 2})];
-      await m.setLang('ur'); out.ur = [m.formatNumber(1234), m.t('form.counter', {count: 1}), m.formatDate('2026-12-06')];
+      await m.setLang('sv'); out.sv = [m.t('form.counter', {count: 1}), m.t('form.counter', {count: 3}), m.formatDate('2026-12-13', {weekday:'long', day:'numeric', month:'long'})];
+      await m.setLang('th'); out.th = [m.formatDate('2026-12-13'), m.t('form.counter', {count: 2})];
+      await m.setLang('ur'); out.ur = [m.formatNumber(1234), m.t('form.counter', {count: 1}), m.formatDate('2026-12-13')];
       await m.setLang('en'); out.en = [m.t('nope.missing'), m.t('form.counter', {count: 1})];
       return out;
     })()""")
     print('   ', api)
     check(api['sv'][0] == 'Du har lagt till 1 person' and api['sv'][1] == 'Du har lagt till 3 personer', 'sv plurals')
-    check(api['sv'][2] == 'söndag 6 december', 'sv date')
+    check(api['sv'][2] == 'söndag 13 december', 'sv date')
     check('2569' in api['th'][0], 'th uses Buddhist Era')
     check(api['ur'][0] == '1,234' or api['ur'][0] == '1٬234' or '1' in api['ur'][0] and '234' in api['ur'][0], 'ur number')
     check(all(c in '0123456789,' for c in api['ur'][0]), 'ur keeps Latin digits')

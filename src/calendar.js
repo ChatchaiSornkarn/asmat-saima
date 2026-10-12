@@ -8,7 +8,7 @@
 //   googleCalendarUrl(config, strings)    → https://calendar.google.com/calendar/render?action=TEMPLATE&…
 //   downloadIcs(ics, { filename?, config? })  (browser only)
 //
-// All-day while config.eventStart is null (DTSTART;VALUE=DATE:20261206 / DTEND;VALUE=DATE:20261207).
+// All-day while config.eventStart is null (DTSTART;VALUE=DATE:20261213 / DTEND;VALUE=DATE:20261214).
 // Timed once eventStart is set: local wall-clock times with TZID + a VTIMEZONE block (CET/CEST rules
 // for Europe/Stockholm and the other EU "Central European Time" zones); end = eventEnd or start + 4 h.
 // For a zone we have no VTIMEZONE for, times are converted to UTC ("…Z") instead — always correct.

@@ -88,7 +88,9 @@ for (const [code, locale] of Object.entries(LOCALES)) {
   for (const [key, val] of flat) {
     const strings = typeof val === 'string' ? [val] : Object.values(val || {});
     for (const s of strings) {
-      if (/Asmat|Saima/.test(ref.get(key) && JSON.stringify(ref.get(key))) && !(/Asmat/.test(s) && /Saima/.test(s))) {
+      // Each name the English string uses must survive in Latin script (sideChoice.asmat has only one).
+      const refText = ref.get(key) ? JSON.stringify(ref.get(key)) : '';
+      if (['Asmat', 'Saima'].some((n) => refText.includes(n) && !s.includes(n))) {
         fail(`${code}: ${key} lost the couple's names (Latin script required)`);
       }
     }

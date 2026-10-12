@@ -24,9 +24,13 @@ var CONFIG_DEFAULTS = {
                                // Several addresses: separate with commas.
   MAX_PARTY: '20',             // largest Party one RSVP may register, Main guest included (design Q25)
   SITE_URL: 'https://chatchaisornkarn.github.io/asmat-saima/',
-  EVENT_DATE: '2026-12-06',    // YYYY-MM-DD — written out in each language in the emails
+  EVENT_DATE: '2026-12-13',    // YYYY-MM-DD — written out in each language in the emails
+  RSVP_DEADLINE: '2026-11-06', // YYYY-MM-DD — reply-by date. An attend row that arrives after the END of this day
+                               // (Europe/Stockholm) gets late = TRUE and a "LATE" owner-email subject (issue 14).
+                               // MUST equal rsvpDeadline in ../config.js (the page's late notice uses that copy);
+                               // tests/apps-script/deadline-sync.test.mjs checks this default against config.js.
   EVENT_TIME: '',              // 'HH:MM' (24h, Göteborg time) — shown in emails once known; '' = hidden
-  VENUE_LINE1: 'Säve Flygplatsväg 26',
+  VENUE_LINE1: 'Grand Plaza Bröllop & Konferens', // venue name shown to guests; the address stays in MAP_QUERY
   VENUE_LINE2: 'Göteborg',
   MAP_QUERY: 'Säve Flygplatsväg 26, 423 73 Säve, Sweden',
   SENDER_NAME: 'Asmat & Saima',
@@ -38,10 +42,35 @@ var SHEET_RSVPS = 'RSVPs';
 var SHEET_GUESTS = 'Guests';
 var SHEET_SUMMARY = 'Summary';
 
-/** Columns of the RSVPs tab (design Q10). The script finds columns by these header names. */
-var RSVP_HEADERS = ['timestamp', 'type', 'email', 'phone', 'party_size', 'names', 'message', 'language', 'status', 'replaces', 'note'];
+/** The deadline day ends at midnight in this zone (same as config.js → timeZone). */
+var DEADLINE_TIME_ZONE = 'Europe/Stockholm';
+
+/**
+ * Columns of the RSVPs tab (design Q10). The script finds columns by these header names, and
+ * getRsvpSheet_() appends any that an existing sheet lacks (so a new column = add its name here).
+ */
+var RSVP_HEADERS = ['timestamp', 'type', 'email', 'phone', 'side', 'party_size', 'men', 'women', 'infants', 'names', 'message',
+  'language', 'status', 'replaces', 'late', 'note'];
+
+/**
+ * Category of each person in a Party (2_main_idea issue 17, design Q2/Q4): exactly one of these.
+ * 'infant' = a child aged 0–3 on the wedding day (labelled "Child 0–3" on the site; free at the venue).
+ * Each `names` line is tagged in English, whatever the guest's language: "Sara Khan — woman".
+ * The script writes the matching men / women / infants counts; party_size = men + women + infants.
+ */
+var CATEGORIES = ['man', 'woman', 'infant'];
+var CATEGORY_COLUMNS = { man: 'men', woman: 'women', infant: 'infants' };
+var NAME_TAG_SEP = ' — ';   // space, EM DASH, space. Names never contain an em dash (cleanPersonName_ replaces it).
+// Added to a cancel row's note when a remaining `names` line has no valid tag, so men + women + infants < party_size.
+var UNTAGGED_NOTE = 'untagged names — fix counts';
 
 var LANGS = ['en', 'sv', 'th', 'ur'];
+
+/**
+ * The two families (design Q1). Each sends its own link, …/?side=asmat or …/?side=saima, and the site
+ * posts that value with the attend reply. The script only ever stores one of these (see cleanSide_).
+ */
+var SIDES = ['asmat', 'saima'];
 
 /** Same limits as the site's form (src/rsvp/validate.js → LIMITS). */
 var LIMITS = { name: 80, email: 254, phone: 32, message: 1000, body: 32 * 1024 };
@@ -78,6 +107,7 @@ function getConfig_() {
     maxParty: maxParty,
     siteUrl: siteUrl,
     eventDate: /^\d{4}-\d{2}-\d{2}$/.test(raw.EVENT_DATE) ? raw.EVENT_DATE : CONFIG_DEFAULTS.EVENT_DATE,
+    rsvpDeadline: /^\d{4}-\d{2}-\d{2}$/.test(raw.RSVP_DEADLINE) ? raw.RSVP_DEADLINE : CONFIG_DEFAULTS.RSVP_DEADLINE,
     eventTime: /^\d{1,2}:\d{2}$/.test(raw.EVENT_TIME) ? raw.EVENT_TIME : '',
     venueLine1: raw.VENUE_LINE1,
     venueLine2: raw.VENUE_LINE2,
@@ -94,8 +124,13 @@ function getConfig_() {
 
 /**
  * POST — the site sends a JSON string as text/plain (no CORS preflight).
- *   { action: 'attend', lang, main: {first,last,email,phone}, members: [{first,last}], message, website }
- *   { action: 'cancel', lang, email, phone, cancel: [names] | all: true, message, website }
+ *   { action: 'attend', lang, side, main: {first,last,email,phone,category}, members: [{first,last,category}], message, website }
+ *     side: 'asmat' | 'saima' (any case) — from the link (?side=, issue 15) or, on a bare link, the guest's
+ *     own choice on the form (issue 16). REQUIRED: missing or anything else → { ok:false, error:'invalid' },
+ *     nothing written, no email. Cancel bodies never carry a side (the Party keeps its own).
+ *     category: 'man' | 'woman' | 'infant' for every person — required (issue 17).
+ *   { action: 'cancel', lang, email, phone, cancel: [{name, category} | name] | all: true, message, website }
+ *     cancel entries: people from the lookup (issue 18, exact name + category match) or plain names (older pages).
  * Always answers JSON: { ok: true, ... } or { ok: false, error: 'invalid'|'party_too_large'|'not_found'|'server' }.
  */
 function doPost(e) {
@@ -116,7 +151,8 @@ function doPost(e) {
 /**
  * GET
  *   ?action=count                      → { ok, guests, households }          (aggregates only)
- *   ?action=lookup&email=..&phone=..   → { ok, names } | { ok:false, error:'not_found' }  (BOTH must match)
+ *   ?action=lookup&email=..&phone=..   → { ok, names: [...], people: [{ name, category }] } | { ok:false, error:'not_found' }
+ *                                        (BOTH must match; category '' on an untagged line)
  *   (no action)                        → { ok: true, status: 'ready' }       (handy to check the URL)
  */
 function doGet(e) {
@@ -150,6 +186,20 @@ function parseBody_(e) {
  */
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** The current time. One place, so tests can set the clock. */
+function now_() {
+  return new Date();
+}
+
+/**
+ * True when `date` is after the end of the reply-by day in Europe/Stockholm — the same rule as the
+ * site's src/rsvp/deadline.js (isLate). 6 Nov 2026 ends at 2026-11-06T23:00:00Z.
+ */
+function isLateAt_(date, deadlineIso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(deadlineIso || ''))) return false;
+  return Utilities.formatDate(date, DEADLINE_TIME_ZONE, 'yyyy-MM-dd') > String(deadlineIso);
 }
 
 function logError_(where, err) {
@@ -191,6 +241,7 @@ function showSettings() {
     'MAX_PARTY: ' + cfg.maxParty,
     'SITE_URL: ' + cfg.siteUrl,
     'EVENT_DATE: ' + cfg.eventDate,
+    'RSVP_DEADLINE: ' + cfg.rsvpDeadline + ' (end of day, ' + DEADLINE_TIME_ZONE + ') — must match rsvpDeadline in config.js',
     'EVENT_TIME: ' + (cfg.eventTime || '(not set — hidden in emails)'),
     'VENUE: ' + cfg.venueLine1 + ', ' + cfg.venueLine2,
     'MAP_QUERY: ' + cfg.mapQuery,

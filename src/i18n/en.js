@@ -5,8 +5,8 @@
 
 export default {
   meta: {
-    title: 'Asmat & Saima · Nikah · 6 December 2026',
-    description: 'You are warmly invited to the Nikah of Asmat & Saima — Sunday, 6 December 2026, Göteborg.',
+    title: 'Asmat & Saima · Nikah · 13 December 2026',
+    description: 'You are warmly invited to the Nikah of Asmat & Saima — Sunday, 13 December 2026, Göteborg.',
   },
 
   switcher: {
@@ -24,7 +24,7 @@ export default {
     invitedTo: 'You are warmly invited to the',
     nikah: 'Nikah',
     of: 'of',
-    date: 'Sunday, 6 December 2026',
+    date: 'Sunday, 13 December 2026',
     time: 'at {time}',
     mapAria: 'Open the address in maps',
   },
@@ -39,7 +39,7 @@ export default {
     directions: 'Directions',
     directionsSub: 'Open in Maps',
     calendar: 'Add to calendar',
-    calendarSub: 'Sunday, 6 December',
+    calendarSub: 'Sunday, 13 December',
     calendarApple: 'Apple Calendar / Outlook',
     calendarAppleSub: 'Download .ics file',
     calendarGoogle: 'Google Calendar',
@@ -54,6 +54,7 @@ export default {
     heading: 'RSVP',
     subheading: 'Kindly let us know if you can join us',
     deadline: 'Please reply by {date}',
+    late: 'Late reply: we will confirm with you whether we can still fit you in.',
     count: {
       one: '{guests} guests from {households} family',
       other: '{guests} guests from {households} families',
@@ -65,6 +66,14 @@ export default {
     },
     hint: 'Adding someone? Just send a new RSVP — it replaces your earlier one.',
     demo: 'Demo mode — RSVPs are saved only in this browser.',
+  },
+
+  // Side choice on a link without ?side= (2_main_idea issue 16). Names stay in Latin script.
+  sideChoice: {
+    label: 'Whose guest are you?',
+    asmat: "Asmat's guest",
+    saima: "Saima's guest",
+    required: 'Please choose whose guest you are.',
   },
 
   form: {
@@ -92,6 +101,13 @@ export default {
     optional: 'optional',
     submit: 'Send RSVP',
     sending: 'Sending…',
+    category: {
+      legend: 'Man, woman or child 0–3',
+      man: 'Man',
+      woman: 'Woman',
+      infant: 'Child 0–3',
+      hint: 'Children aged 4 and up: choose man or woman.',
+    },
     honeypot: 'Leave this field empty',
   },
 
@@ -100,6 +116,7 @@ export default {
     email: 'Please enter a valid email address.',
     phone: 'Please enter a phone number starting with 07 or +.',
     tooLong: 'This is a little too long.',
+    category: 'Choose man, woman or child 0–3.',
     fixErrors: 'Please check the highlighted fields.',
   },
 

@@ -26,5 +26,11 @@ for (const ev of b.context.sampleEvents_()) {
 const upd = { ...b.context.sampleEvents_()[0], replaces: '7', previous: [{ rowNum: 7, names: ['Amina Rahman'] }], note: 'row 7 matched on phone only (its email: amina.r@example.com)' };
 write('owner-attend-updated', b.context.renderOwnerEmail_(upd, cfg));
 write('guest-en-attend-updated', b.context.renderGuestEmail_(upd, cfg));
+// A late reply (after RSVP_DEADLINE, issue 14): owner subject starts with LATE, guest gets the late line.
+const late = { ...b.context.sampleEvents_()[0], late: true, deadline: cfg.rsvpDeadline };
+write('owner-attend-late', b.context.renderOwnerEmail_(late, cfg));
+for (const ev of b.context.sampleEvents_().filter((e) => e.kind === 'attend')) {
+  write(`guest-${ev.lang}-attend-late`, b.context.renderGuestEmail_({ ...ev, late: true }, cfg));
+}
 
 console.log(`Wrote ${files.length} emails to ${out}:\n  ` + files.join('\n  '));

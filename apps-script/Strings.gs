@@ -8,6 +8,7 @@
  *   └───────────────────────────────────────────────────────────────────────────┘
  *
  * Placeholders: {name}, {time}. guests(n) returns the Party size phrase.
+ * category.{man,woman,infant}: shown in brackets after each name in the confirmation (issue 17).
  * The couple's names "Asmat & Saima" are never translated (Latin calligraphy in every language).
  */
 var EMAIL_STRINGS = {
@@ -28,8 +29,11 @@ var EMAIL_STRINGS = {
       cancelled: 'We are so sorry you can’t be with us — your RSVP has been cancelled. You will be dearly missed.',
     },
     replaced: 'This replaces your earlier RSVP.',
+    late: 'Your reply arrived after the reply-by date. We will confirm with you whether we can still fit you in.',
     partyHeading: 'Your party',
     guests: function (n) { return n === 1 ? '1 guest' : n + ' guests'; },
+    // Category of each person in the party list (issue 17): "Sara Khan (woman)".
+    category: { man: 'man', woman: 'woman', infant: 'child 0–3' },
     cancelledHeading: 'No longer coming',
     remainingHeading: 'Still coming',
     messageHeading: 'Your message',
@@ -63,8 +67,10 @@ var EMAIL_STRINGS = {
       cancelled: 'Vad tråkigt att du inte kan komma – ditt OSA är nu avbokat. Du kommer att vara saknad.',
     },
     replaced: 'Detta ersätter ditt tidigare OSA.',
+    late: 'Ditt svar kom efter sista svarsdagen. Vi återkommer till dig och bekräftar om vi fortfarande har plats för er.',
     partyHeading: 'Ditt sällskap',
     guests: function (n) { return n === 1 ? '1 gäst' : n + ' gäster'; },
+    category: { man: 'man', woman: 'kvinna', infant: 'barn 0–3 år' },
     cancelledHeading: 'Kan inte komma',
     remainingHeading: 'Kommer fortfarande',
     messageHeading: 'Ditt meddelande',
@@ -98,8 +104,10 @@ var EMAIL_STRINGS = {
       cancelled: 'เสียดายอย่างยิ่งที่ท่านไม่สามารถมาร่วมงานได้ เราได้ยกเลิกการตอบรับของท่านเรียบร้อยแล้ว และจะคิดถึงท่านเสมอ',
     },
     replaced: 'การตอบรับนี้ใช้แทนการตอบรับก่อนหน้าของท่าน',
+    late: 'การตอบรับของท่านมาถึงหลังวันกำหนดตอบรับ เราจะติดต่อกลับเพื่อยืนยันว่ายังสามารถรับรองท่านได้หรือไม่',
     partyHeading: 'คณะของท่าน',
     guests: function (n) { return n + ' ท่าน'; },
+    category: { man: 'ชาย', woman: 'หญิง', infant: 'เด็กอายุ 0–3 ปี' },
     cancelledHeading: 'ไม่สามารถมาร่วมงานได้',
     remainingHeading: 'ยังคงมาร่วมงาน',
     messageHeading: 'ข้อความของท่าน',
@@ -133,8 +141,10 @@ var EMAIL_STRINGS = {
       cancelled: 'یہ جان کر بہت افسوس ہوا کہ آپ تشریف نہیں لا سکیں گے۔ آپ کا جواب منسوخ کر دیا گیا ہے۔ آپ کی کمی شدت سے محسوس ہوگی۔',
     },
     replaced: 'یہ جواب آپ کے پچھلے جواب کی جگہ لے لیتا ہے۔',
+    late: 'آپ کا جواب مقررہ تاریخ کے بعد موصول ہوا ہے۔ ہم آپ سے رابطہ کر کے تصدیق کریں گے کہ آیا ہم اب بھی آپ کے لیے جگہ بنا سکتے ہیں۔',
     partyHeading: 'آپ کے ہمراہ مہمان',
     guests: function (n) { return n + ' مہمان'; },
+    category: { man: 'مرد', woman: 'خاتون', infant: '0–3 سال کا بچہ' },
     cancelledHeading: 'شرکت نہیں کر سکیں گے',
     remainingHeading: 'شرکت کریں گے',
     messageHeading: 'آپ کا پیغام',
@@ -165,9 +175,9 @@ var MONTHS_ = {
 };
 
 /**
- * '2026-12-06' → the date written out in the guest's language:
- *   en 'Sunday, 6 December 2026'      sv 'Söndag 6 december 2026'
- *   th 'วันอาทิตย์ที่ 6 ธันวาคม พ.ศ. 2569'  ur 'بروز اتوار، 6 دسمبر 2026ء'
+ * '2026-12-13' → the date written out in the guest's language:
+ *   en 'Sunday, 13 December 2026'     sv 'Söndag 13 december 2026'
+ *   th 'วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569'  ur 'بروز اتوار، 13 دسمبر 2026ء'
  */
 function formatEventDate_(iso, lang) {
   var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso));

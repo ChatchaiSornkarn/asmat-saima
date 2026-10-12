@@ -1,13 +1,23 @@
 # Asmat & Saima — Nikah invitation
 
-The wedding invitation website for the **Nikah of Asmat & Saima**, Sunday 6 December 2026, Säve Flygplatsväg 26, Göteborg.
+The wedding invitation website for the **Nikah of Asmat & Saima**, Sunday 13 December 2026, Grand Plaza Bröllop & Konferens, Göteborg.
 
 Guests open a sealed envelope, the arched doors swing open, and they see the invitation postcard. Below it are
-directions, "Add to calendar", a public guest count, and an RSVP form where one person can register their whole family
-(or cancel some or all of them later). Replies go to a Google Sheet you own, and both you and the guest get an email.
+directions, "Add to calendar", a public guest count, and an RSVP form where one person can register their whole family,
+marking each person as Man, Woman or Child 0–3 (or cancel some or all of them later). Replies go to a Google Sheet you own, and both you and the guest get an email.
 The site is available in English, Swedish, Thai and Urdu (Urdu is right-to-left).
 
 **Live URL:** <https://chatchaisornkarn.github.io/asmat-saima/>
+
+**The two family links.** Each family sends its own link, so every reply is saved with the right Side
+(the `side` column in the Sheet):
+
+- Asmat's family: <https://chatchaisornkarn.github.io/asmat-saima/?side=asmat>
+- Saima's family: <https://chatchaisornkarn.github.io/asmat-saima/?side=saima>
+
+Add `&lang=…` to pick the language, e.g. `…/?side=saima&lang=ur`. The guest never sees the Side. Someone who gets
+the other family's link is saved on the wrong Side; fix it by editing that row's `side` cell. A link without
+`?side=` still works: the "We're coming" form then asks "Asmat's guest" / "Saima's guest" before it can be sent.
 
 It is a plain static site (HTML, CSS and vanilla JS ES modules) with no build step and no `npm install`.
 
@@ -25,10 +35,11 @@ Then open <http://localhost:8080/>. Handy URL parameters:
 | Parameter | What it does |
 |---|---|
 | `?lang=en` / `sv` / `th` / `ur` | Forces a language. Without it the browser language is used, falling back to English. Use these links when sending the invitation to a group. |
+| `?side=asmat` / `saima` | Which family invited the guest (any letter case). Read once on load, never shown, sent with the "We're coming" reply and saved in the `side` column. Missing or any other value: the "We're coming" tab shows a required "Asmat's guest" / "Saima's guest" choice instead. |
 | `?open=1` | Skips the opening animation. Meant for development and screenshots only. |
 | `?demo=reset` | Clears the demo RSVPs stored in this browser (see below). |
 
-You can combine them, e.g. `http://localhost:8080/?lang=ur&open=1`.
+You can combine them, e.g. `http://localhost:8080/?side=saima&lang=ur&open=1`.
 
 ## Demo mode
 
@@ -48,12 +59,14 @@ So it is safe to share the site for feedback before the backend is set up.
 2. **Connect the site.** Paste the web-app URL (ends in `/exec`) into `appsScriptUrl` in `config.js`.
 3. **Fill in what you know.** Set `rsvpDeadline`, `eventStart` (and `eventEnd`) and `contactEmail` in `config.js`
    once decided. Each one can stay empty; the related line is then hidden, or the calendar entry is all-day.
-   Also set the matching Script Properties (`EVENT_TIME`, `MAX_PARTY` etc.) described in the backend README.
+   Also set the matching Script Properties (`EVENT_TIME`, `MAX_PARTY`, `RSVP_DEADLINE` etc.) described in the backend README.
+   `RSVP_DEADLINE` must equal `rsvpDeadline` (`2026-11-06`), or the page's late notice and the Sheet's `late` flag disagree.
 4. **Push and enable GitHub Pages.** Commit and push to `main`
    (`git@github.com:ChatchaiSornkarn/asmat-saima.git`). On GitHub go to **Settings → Pages**, set *Source* to
    **Deploy from a branch**, branch **main**, folder **/ (root)**. The site appears at the live URL in about a minute.
 5. **Test end to end**, proofread the translations, and clear the test rows from the Sheet
-   (see `../requirements/issues/12_launch.md`).
+   (see `../requirements/issues/1_main_idea/12_launch.md`).
+6. **Send the two family links** (above): `?side=asmat` to Asmat's family, `?side=saima` to Saima's family.
 
 After launch you can change any setting by editing `config.js` on github.com (pencil icon → Commit).
 Pages redeploys in about a minute.
@@ -63,15 +76,15 @@ Pages redeploys in about a minute.
 | Setting | Default | Meaning |
 |---|---|---|
 | `appsScriptUrl` | `''` | Apps Script web-app URL (ends in `/exec`). Empty = demo mode. |
-| `rsvpDeadline` | `null` | ISO date `'YYYY-MM-DD'` for "Please reply by …". `null` hides the line. The form stays open after the date either way. |
+| `rsvpDeadline` | `'2026-11-06'` | ISO date `'YYYY-MM-DD'` for "Please reply by …". The line shows until the end of that day in `timeZone` (Europe/Stockholm). After it, the "We're coming" form stays open with a late-reply notice ("we will confirm with you whether we can still fit you in"), and the script marks those rows `late = TRUE`. `null` hides the line and the notice. **Keep it equal to the `RSVP_DEADLINE` Script Property** (backend README); `tests/apps-script/deadline-sync.test.mjs` checks the script's default. |
 | `guestCountThreshold` | `10` | The public "N guests from M families" line appears once N reaches this number. |
 | `maxPartySize` | `20` | Largest party one RSVP may register, main guest included. Keep it in sync with `MAX_PARTY` in the Apps Script settings. |
-| `eventDate` | `'2026-12-06'` | Date of the event (used by the calendar entry). |
+| `eventDate` | `'2026-12-13'` | Date of the event (used by the calendar entry). |
 | `eventStart` | `null` | Start time `'HH:MM'` in local Göteborg time. `null` = all-day calendar entry. |
 | `eventEnd` | `null` | End time `'HH:MM'`. Defaults to start + 4 hours. |
 | `timeZone` | `'Europe/Stockholm'` | Time zone of the event times. |
-| `venue.line1`, `venue.line2` | `'Säve Flygplatsväg 26'`, `'Göteborg'` | Address shown on the site. |
-| `venue.mapQuery` | `'Säve Flygplatsväg 26, 423 73 Säve, Sweden'` | Search text for the Directions link (Apple Maps on iPhone/iPad/Mac, Google Maps elsewhere). |
+| `venue.line1`, `venue.line2` | `'Grand Plaza Bröllop & Konferens'`, `'Göteborg'` | Venue name and city shown on the site. |
+| `venue.mapQuery` | `'Säve Flygplatsväg 26, 423 73 Säve, Sweden'` | Real street address: search text for the Directions link (Apple Maps on iPhone/iPad/Mac, Google Maps elsewhere), and added after the venue name in the calendar entry. |
 | `contactEmail` | `''` | Shown as "Larger family? Contact us" when a party reaches the cap. Empty = hidden. |
 | `languages` | `['en', 'sv', 'th', 'ur']` | Languages offered in the switcher. |
 | `defaultLanguage` | `'en'` | Fallback when the browser language isn't supported. |
@@ -84,6 +97,7 @@ asmat-saima/
 ├─ config.js             all settings you may change after launch
 ├─ src/
 │  ├─ main.js            wires everything together
+│  ├─ art/               SVG art for the arch and the opening animation
 │  ├─ i18n/              strings per language (en, sv, th, ur) + language detection/switching
 │  ├─ switcher.js        EN / SV / TH / اردو switcher
 │  ├─ opening.js         envelope → doors opening animation (art in src/art/)
@@ -91,7 +105,22 @@ asmat-saima/
 │  ├─ layout.js          RSVP cue, Directions, Add to calendar, footer, scroll reveal
 │  ├─ calendar.js        .ics file and Google Calendar link
 │  ├─ maps.js            map link
-│  ├─ rsvp/              RSVP forms, validation, API client, demo mock
+│  ├─ rsvp/              RSVP section
+│  │  ├─ index.js        section shell: heading, deadline, count, tabs, late notice
+│  │  ├─ attend.js       "We're coming" form (whole Party)
+│  │  ├─ cancel.js       "Can't come" form: lookup by email + phone, tick who can't come
+│  │  ├─ category.js     Man · Woman · Child 0–3 choice per person
+│  │  ├─ side.js         reads ?side=asmat|saima from the link (pure)
+│  │  ├─ side-choice.js  "Asmat's guest" / "Saima's guest" choice on a bare link
+│  │  ├─ deadline.js     reply-by date: open / late checks in Göteborg time (pure)
+│  │  ├─ validate.js     field checks and request payloads (pure)
+│  │  ├─ phone.js        phone normalisation (pure)
+│  │  ├─ api.js          Apps Script client (or the demo mock)
+│  │  ├─ mock.js         demo backend in localStorage
+│  │  ├─ count.js        public "N guests from M families" line
+│  │  ├─ fields.js       form field factory
+│  │  ├─ dom.js          small DOM helpers
+│  │  └─ ornaments.js    inline SVG ornaments
 │  └─ styles/            CSS
 ├─ assets/               images (art layers, favicon, share image)
 ├─ apps-script/          Google Apps Script backend + setup guide
@@ -108,8 +137,8 @@ Run everything from the `asmat-saima/` folder. The Node tests need Node 22+ (the
 # Backend (Apps Script code run against mocked Google services). Keep the quotes.
 node --test 'tests/apps-script/*.test.mjs'
 
-# RSVP logic, API client and demo mock
-node --test tests/rsvp/
+# RSVP logic, API client, demo mock, wedding date, reply-by deadline, ?side= links, the bare-link side choice and category per person. Keep the quotes.
+node --test 'tests/rsvp/*.test.mjs'
 
 # Calendar (.ics / Google Calendar link)
 node --test tests/layout/calendar.test.mjs
@@ -155,4 +184,4 @@ Run `node tests/i18n/check-keys.mjs` after editing a strings file.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): how the modules fit together, the backend API, and row meanings.
 - [`apps-script/README.md`](apps-script/README.md): backend setup, settings, quotas, and troubleshooting.
-- `../docs/wedding-invite-design.md` and `../requirements/issues/`: the design and the feature issues.
+- `../docs/wedding-invite-design.md`, `../docs/guest-categories-design.md` and `../requirements/issues/`: the designs and the feature issues, grouped by requirement.

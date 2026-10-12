@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { buildIcs, googleCalendarUrl, escapeText, foldLine, eventTimes } from '../../src/calendar.js';
 
 const baseConfig = {
-  eventDate: '2026-12-06',
+  eventDate: '2026-12-13',
   eventStart: null,
   eventEnd: null,
   timeZone: 'Europe/Stockholm',
@@ -51,12 +51,12 @@ function assertWellFormed(ics) {
 test('all-day event while eventStart is null', () => {
   const ics = buildIcs(baseConfig, strings, { now });
   assertWellFormed(ics);
-  assert.equal(prop(ics, 'DTSTART'), 'DTSTART;VALUE=DATE:20261206');
-  assert.equal(prop(ics, 'DTEND'), 'DTEND;VALUE=DATE:20261207');
+  assert.equal(prop(ics, 'DTSTART'), 'DTSTART;VALUE=DATE:20261213');
+  assert.equal(prop(ics, 'DTEND'), 'DTEND;VALUE=DATE:20261214');
   assert.ok(!ics.includes('VTIMEZONE'), 'no VTIMEZONE for an all-day event');
   assert.ok(!ics.includes('TZID'), 'no TZID for an all-day event');
   assert.equal(prop(ics, 'DTSTAMP'), 'DTSTAMP:20261002T083005Z');
-  assert.match(prop(ics, 'UID'), /^UID:nikah-20261206@/);
+  assert.match(prop(ics, 'UID'), /^UID:nikah-20261213@/);
   assert.equal(prop(ics, 'SUMMARY'), 'SUMMARY;LANGUAGE=en:Nikah of Asmat & Saima');
   assert.equal(prop(ics, 'URL'), 'URL:https://chatchaisornkarn.github.io/asmat-saima/');
   assert.equal(prop(ics, 'LOCATION'), 'LOCATION:Säve Flygplatsväg 26\\, 423 73 Säve\\, Sweden');
@@ -68,8 +68,8 @@ test('all-day event while eventStart is null', () => {
 test('setting eventStart produces a timed event in Europe/Stockholm with VTIMEZONE', () => {
   const ics = buildIcs({ ...baseConfig, eventStart: '14:00' }, strings, { now });
   assertWellFormed(ics);
-  assert.equal(prop(ics, 'DTSTART'), 'DTSTART;TZID=Europe/Stockholm:20261206T140000');
-  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261206T180000', 'defaults to start + 4h');
+  assert.equal(prop(ics, 'DTSTART'), 'DTSTART;TZID=Europe/Stockholm:20261213T140000');
+  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261213T180000', 'defaults to start + 4h');
   const u = unfold(ics);
   assert.ok(u.includes('BEGIN:VTIMEZONE\r\nTZID:Europe/Stockholm'));
   assert.ok(u.includes('TZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nTZNAME:CEST'));
@@ -81,11 +81,11 @@ test('setting eventStart produces a timed event in Europe/Stockholm with VTIMEZO
 
 test('eventEnd is honoured, and an end past midnight rolls to the next day', () => {
   let ics = buildIcs({ ...baseConfig, eventStart: '14:00', eventEnd: '20:30' }, strings, { now });
-  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261206T203000');
+  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261213T203000');
   ics = buildIcs({ ...baseConfig, eventStart: '18:00', eventEnd: '01:00' }, strings, { now });
-  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261207T010000');
+  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261214T010000');
   ics = buildIcs({ ...baseConfig, eventStart: '21:30' }, strings, { now });
-  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261207T013000', 'start + 4h crosses midnight');
+  assert.equal(prop(ics, 'DTEND'), 'DTEND;TZID=Europe/Stockholm:20261214T013000', 'start + 4h crosses midnight');
 });
 
 test('toggling eventStart back to null returns to all-day', () => {
@@ -93,14 +93,14 @@ test('toggling eventStart back to null returns to all-day', () => {
   assert.equal(eventTimes(cfg).allDay, false);
   cfg.eventStart = null;
   assert.equal(eventTimes(cfg).allDay, true);
-  assert.equal(prop(buildIcs(cfg, strings, { now }), 'DTSTART'), 'DTSTART;VALUE=DATE:20261206');
+  assert.equal(prop(buildIcs(cfg, strings, { now }), 'DTSTART'), 'DTSTART;VALUE=DATE:20261213');
 });
 
 test('zone without a VTIMEZONE table falls back to UTC times', () => {
   const ics = buildIcs({ ...baseConfig, eventStart: '14:00', timeZone: 'Asia/Karachi' }, strings, { now });
   assertWellFormed(ics);
-  assert.equal(prop(ics, 'DTSTART'), 'DTSTART:20261206T090000Z'); // PKT = UTC+5
-  assert.equal(prop(ics, 'DTEND'), 'DTEND:20261206T130000Z');
+  assert.equal(prop(ics, 'DTSTART'), 'DTSTART:20261213T090000Z'); // PKT = UTC+5
+  assert.equal(prop(ics, 'DTEND'), 'DTEND:20261213T130000Z');
 });
 
 test('TEXT escaping of backslash, semicolon, comma and newlines', () => {
@@ -152,18 +152,18 @@ test('Google Calendar link: all-day dates, then local times with ctz', () => {
   let url = new URL(googleCalendarUrl(baseConfig, strings));
   assert.equal(url.origin + url.pathname, 'https://calendar.google.com/calendar/render');
   assert.equal(url.searchParams.get('action'), 'TEMPLATE');
-  assert.equal(url.searchParams.get('dates'), '20261206/20261207');
+  assert.equal(url.searchParams.get('dates'), '20261213/20261214');
   assert.equal(url.searchParams.get('ctz'), null);
   assert.equal(url.searchParams.get('text'), 'Nikah of Asmat & Saima');
   assert.equal(url.searchParams.get('location'), baseConfig.venue.mapQuery);
   assert.ok(url.searchParams.get('details').includes(strings.url));
 
   url = new URL(googleCalendarUrl({ ...baseConfig, eventStart: '14:00' }, strings));
-  assert.equal(url.searchParams.get('dates'), '20261206T140000/20261206T180000');
+  assert.equal(url.searchParams.get('dates'), '20261213T140000/20261213T180000');
   assert.equal(url.searchParams.get('ctz'), 'Europe/Stockholm');
 });
 
 test('invalid config values throw a clear error', () => {
-  assert.throws(() => buildIcs({ ...baseConfig, eventDate: '6/12/2026' }, strings), /eventDate/);
+  assert.throws(() => buildIcs({ ...baseConfig, eventDate: '13/12/2026' }, strings), /eventDate/);
   assert.throws(() => buildIcs({ ...baseConfig, eventStart: '2pm' }, strings), /time/);
 });

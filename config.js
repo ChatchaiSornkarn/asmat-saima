@@ -8,8 +8,9 @@ export default {
   // RSVPs are then stored only in this browser so the site can be tried safely.
   appsScriptUrl: 'https://script.google.com/macros/s/AKfycbyVQlkXbJfbFLk9gyDPmAuWTDAphRe2g_HuGKrm7mRYXjKaGyX2IriCgPNh4Y7vivvsdQ/exec',
 
-  // ISO date (YYYY-MM-DD) for "Please reply by …". null = line hidden (Q17).
-  rsvpDeadline: null,
+  // ISO date (YYYY-MM-DD) for "Please reply by …", shown until the end of that day in
+  // timeZone (Europe/Stockholm). null = line hidden (Q17).
+  rsvpDeadline: '2026-11-06',
 
   // Public "N guests from M families" line appears once N reaches this (Q16).
   guestCountThreshold: 10,
@@ -19,15 +20,16 @@ export default {
 
   // Event date, and start/end time in local Göteborg time ('HH:MM').
   // eventStart null = all-day calendar entry (Q21).
-  eventDate: '2026-12-06',
+  eventDate: '2026-12-13',
   eventStart: null,          // e.g. '14:00'
   eventEnd: null,            // e.g. '20:00' (defaults to start + 4h)
   timeZone: 'Europe/Stockholm',
 
   venue: {
-    line1: 'Säve Flygplatsväg 26',
+    line1: 'Grand Plaza Bröllop & Konferens',   // venue name shown to guests
+    // The street address is only used for directions and the calendar entry:
     line2: 'Göteborg',
-    mapQuery: 'Säve Flygplatsväg 26, 423 73 Säve, Sweden',
+    mapQuery: 'Säve Flygplatsväg 26, 423 73 Säve, Sweden',   // real address — Directions link + calendar
   },
 
   // Optional contact shown for "Larger family? Contact us". '' = hidden.

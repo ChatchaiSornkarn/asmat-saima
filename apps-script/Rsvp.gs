@@ -24,6 +24,46 @@ function cleanName_(v) {
   return s;
 }
 
+/**
+ * A first name or surname as typed: cleanName_() plus no em dash (U+2014) or horizontal bar (U+2015), which
+ * become a hyphen. " — " separates a name from its category tag on each `names` line (issue 17), so a name
+ * must never contain it: "Sara — Khan" → "Sara - Khan".
+ */
+function cleanPersonName_(v) {
+  var s = cleanName_(v);
+  if (s === null) return null;
+  return s.replace(/[\u2014\u2015]/g, '-');
+}
+
+/** 'man' / 'Woman ' / 'INFANT' → the category; anything else (missing, 'child', a number…) → null. */
+function cleanCategory_(v) {
+  if (typeof v !== 'string') return null;
+  var c = v.trim().toLowerCase();
+  return CATEGORIES.indexOf(c) >= 0 ? c : null;
+}
+
+/** { name: 'Sara Khan', category: 'woman' } → 'Sara Khan — woman' (an untagged person → just the name). */
+function tagLine_(p) {
+  return p.category ? p.name + NAME_TAG_SEP + p.category : p.name;
+}
+
+/**
+ * One `names` line → { name, category }. 'Sara Khan — woman' → { name: 'Sara Khan', category: 'woman' }.
+ * A line without a valid tag (e.g. typed by hand in the Sheet) keeps its text as the name, category ''.
+ */
+function parseNameLine_(line) {
+  var m = /^(.*\S)\s+\u2014\s+(man|woman|infant)$/i.exec(line);
+  if (!m) return { name: line, category: '' };
+  return { name: m[1], category: m[2].toLowerCase() };
+}
+
+/** Counts per category: { men, women, infants } (untagged people are in none of them). */
+function countCategories_(people) {
+  var out = { men: 0, women: 0, infants: 0 };
+  people.forEach(function (p) { var k = CATEGORY_COLUMNS[p.category]; if (k) out[k] += 1; });
+  return out;
+}
+
 /** 'Amina Rahman' → 'Amina' (the RSVPs tab keeps full names only; used to greet in cancel emails). */
 function firstWord_(name) {
   return String(name || '').split(' ')[0];
@@ -85,7 +125,20 @@ function cleanLang_(v) {
 }
 
 /**
- * Validates an attend body. Returns { error } or { value: { lang, email, phone, names, message } }.
+ * 'asmat', 'SAIMA', ' Saima ' → 'asmat' / 'saima'. Anything else (missing, other text, not a string) → ''.
+ * Never trusts the client: only a value in SIDES is ever written to the sheet.
+ * An attend body must carry a valid side (issue 16 — validateAttend_ rejects ''). '' can still appear on
+ * rows from before issue 16 or a cell the owner cleared by hand; a cancel copies whatever the row has.
+ */
+function cleanSide_(v) {
+  if (typeof v !== 'string') return '';
+  var s = v.trim().toLowerCase();
+  return SIDES.indexOf(s) >= 0 ? s : '';
+}
+
+/**
+ * Validates an attend body. Returns { error } or { value: { lang, side, email, phone, first, names, people, message } }.
+ * Every person needs a category 'man' | 'woman' | 'infant' (issue 17) — a missing or unknown one is 'invalid'.
  * party_too_large wins over other problems (same as the site's mock).
  */
 function validateAttend_(body, maxParty) {
@@ -102,23 +155,34 @@ function validateAttend_(body, maxParty) {
   if (!lang || !isValidEmail_(email) || !isValidPhone_(phoneRaw) || message === null || message.length > LIMITS.message) {
     return { error: 'invalid' };
   }
+  var side = cleanSide_(body.side);          // required (issue 16): the link's ?side= or the guest's choice
+  if (!side) return { error: 'invalid' };
 
   var people = [main].concat(members);
   var names = [];
+  var party = [];
   for (var i = 0; i < people.length; i++) {
     var p = people[i];
     if (!p || typeof p !== 'object' || Array.isArray(p)) return { error: 'invalid' };
-    var first = cleanName_(p.first);
-    var last = cleanName_(p.last);
+    var first = cleanPersonName_(p.first);
+    var last = cleanPersonName_(p.last);
     if (!first || !last || first.length > LIMITS.name || last.length > LIMITS.name) return { error: 'invalid' };
-    names.push(fullName_(first, last));
+    var category = cleanCategory_(p.category);
+    if (!category) return { error: 'invalid' };
+    var name = fullName_(first, last);
+    names.push(name);
+    party.push({ name: name, category: category });
   }
   return {
-    value: { lang: lang, email: email, phone: normalisePhone_(phoneRaw), first: cleanName_(main.first), names: names, message: message },
+    value: { lang: lang, side: side, email: email, phone: normalisePhone_(phoneRaw), first: cleanPersonName_(main.first), names: names, people: party, message: message },
   };
 }
 
-/** Validates a cancel body. Returns { error } or { value: { lang, email, phone, all, cancel, message } }. */
+/**
+ * Validates a cancel body. Returns { error } or { value: { lang, email, phone, all, cancel, message } }.
+ * Each `cancel` entry is a person from the lookup, { name, category } (issue 18), or a plain name (older pages).
+ * cancel → [{ name, category }] where category is '' when not given (a plain name, or an untagged lookup line).
+ */
 function validateCancel_(body) {
   var lang = cleanLang_(body.lang);
   var email = cleanEmail_(body.email);
@@ -132,9 +196,13 @@ function validateCancel_(body) {
   if (!all) {
     if (!Array.isArray(body.cancel) || body.cancel.length === 0 || body.cancel.length > 100) return { error: 'invalid' };
     for (var i = 0; i < body.cancel.length; i++) {
-      var n = cleanName_(body.cancel[i]);
+      var e = body.cancel[i];
+      var isObj = e && typeof e === 'object' && !Array.isArray(e);
+      var n = cleanName_(isObj ? e.name : e);
       if (!n || n.length > 2 * LIMITS.name + 1) return { error: 'invalid' };
-      cancel.push(n);
+      var cat = isObj && e.category !== undefined && e.category !== null && e.category !== '' ? cleanCategory_(e.category) : '';
+      if (cat === null) return { error: 'invalid' };
+      cancel.push({ name: n, category: cat });
     }
   }
   return { value: { lang: lang, email: email, phone: normalisePhone_(phoneRaw), all: all, cancel: cancel, message: message } };
@@ -201,12 +269,16 @@ function readRsvps_(sheet) {
       type: String(v[col.type]).trim().toLowerCase(),
       email: cleanEmail_(String(v[col.email])) || '',
       phone: storedPhone_(v[col.phone]),
+      side: cleanSide_(String(v[col.side] === undefined || v[col.side] === null ? '' : v[col.side])),   // a hand-edited cell may be 'Saima'
       partySize: Number(v[col.party_size]) || 0,
-      names: splitNames_(v[col.names]),
+      people: splitNames_(v[col.names]).map(parseNameLine_),
       message: String(v[col.message] === undefined || v[col.message] === null ? '' : v[col.message]),
       status: String(v[col.status]).trim().toLowerCase(),
+      late: v[col.late] === true || /^true$/i.test(String(v[col.late]).trim()),
       note: String(v[col.note] === undefined || v[col.note] === null ? '' : v[col.note]),
     });
+    var last = rows[rows.length - 1];
+    last.names = last.people.map(function (p) { return p.name; });   // plain names (lookup, cancel matching)
   }
   return { sheet: sheet, width: width, col: col, rows: rows, lastRow: lastRow };
 }
@@ -232,20 +304,30 @@ function cellText_(v) {
   return /^[=+\-@'\t\r]/.test(s) ? "'" + s : s;
 }
 
-/** Appends one RSVP row (laid out by header position) and returns its sheet row number. */
+/**
+ * Appends one RSVP row (laid out by header position) and returns its sheet row number.
+ * rec.people = [{ name, category }]: written as tagged `names` lines plus the men / women / infants counts;
+ * party_size is the number of people (= men + women + infants when everyone is tagged).
+ */
 function appendRsvp_(table, rec) {
+  var counts = countCategories_(rec.people);
   var row = [];
   for (var i = 0; i < table.width; i++) row.push('');
   row[table.col.timestamp] = rec.timestamp;
   row[table.col.type] = rec.type;
   row[table.col.email] = cellText_(rec.email);
   row[table.col.phone] = cellText_(rec.phone);
-  row[table.col.party_size] = rec.partySize;
-  row[table.col.names] = cellText_(rec.names.join('\n'));
+  row[table.col.side] = cleanSide_(rec.side);                          // 'asmat' | 'saima' | ''
+  row[table.col.party_size] = rec.people.length;
+  row[table.col.men] = counts.men;
+  row[table.col.women] = counts.women;
+  row[table.col.infants] = counts.infants;
+  row[table.col.names] = cellText_(rec.people.map(tagLine_).join('\n'));
   row[table.col.message] = cellText_(rec.message);
   row[table.col.language] = rec.language;
   row[table.col.status] = rec.status;
   row[table.col.replaces] = rec.replaces ? "'" + rec.replaces : '';   // always text ("2,5" must not become a number)
+  row[table.col.late] = rec.late === true;                             // a real checkbox-style TRUE / FALSE
   row[table.col.note] = cellText_(rec.note);
   var rowNum = table.lastRow + 1;
   var maxRows = table.sheet.getMaxRows();
@@ -253,8 +335,8 @@ function appendRsvp_(table, rec) {
   table.sheet.getRange(rowNum, 1, 1, table.width).setValues([row]);
   table.lastRow = rowNum;
   table.rows.push({
-    rowNum: rowNum, timestamp: rec.timestamp, type: rec.type, email: rec.email, phone: rec.phone,
-    partySize: rec.partySize, names: rec.names.slice(), message: rec.message, status: rec.status, note: rec.note,
+    rowNum: rowNum, timestamp: rec.timestamp, type: rec.type, email: rec.email, phone: rec.phone, side: cleanSide_(rec.side),
+    partySize: rec.people.length, people: rec.people.slice(), names: rec.people.map(function (p) { return p.name; }), message: rec.message, status: rec.status, late: rec.late === true, note: rec.note,
   });
   return rowNum;
 }
@@ -317,14 +399,16 @@ function handleAttend_(body) {
     }
     var replacesRef = replaced.map(function (r) { return r.rowNum; }).join(',');
     var note = notes.join('; ');
+    var timestamp = now_();
+    var late = isLateAt_(timestamp, cfg.rsvpDeadline);   // after the reply-by day (issue 14) — still accepted
     var rowNum = appendRsvp_(table, {
-      timestamp: new Date(), type: 'attend', email: a.email, phone: a.phone, partySize: a.names.length,
-      names: a.names, message: a.message, language: a.lang, status: 'active', replaces: replacesRef, note: note,
+      timestamp: timestamp, type: 'attend', email: a.email, phone: a.phone, side: a.side,
+      people: a.people, message: a.message, language: a.lang, status: 'active', replaces: replacesRef, late: late, note: note,
     });
     SpreadsheetApp.flush();
     ev = {
-      kind: 'attend', lang: a.lang, email: a.email, phone: a.phone, greetName: a.first, names: a.names,
-      message: a.message, rowNum: rowNum, replaces: replacesRef, note: note,
+      kind: 'attend', lang: a.lang, side: a.side, email: a.email, phone: a.phone, greetName: a.first, names: a.names,
+      people: a.people, counts: countCategories_(a.people), message: a.message, rowNum: rowNum, replaces: replacesRef, note: note, late: late, deadline: cfg.rsvpDeadline,
       previous: replaced.map(function (r) { return { rowNum: r.rowNum, names: r.names }; }),
       totals: totalsOf_(table.rows), sheetUrl: sheetUrl_(),
     };
@@ -333,7 +417,10 @@ function handleAttend_(body) {
   }
   invalidateCount_();
   notify_(ev);
-  return { ok: true, partySize: ev.names.length, names: ev.names.slice(), replaced: ev.replaces !== '' };
+  return {
+    ok: true, partySize: ev.names.length, names: ev.names.slice(),
+    people: ev.people.map(function (p) { return { name: p.name, category: p.category }; }), replaced: ev.replaces !== '',
+  };
 }
 
 /** Cancel (partial or full). Needs the active Party matching BOTH email and phone (Q13). */
@@ -351,35 +438,45 @@ function handleCancel_(body) {
     var row = findActiveBoth_(table.rows, c.email, c.phone);
     if (!row) return { ok: false, error: 'not_found' };
 
-    var remaining = row.names.slice();
-    var cancelled = [];
+    // Works on people ({ name, category }) so the remaining `names` lines keep their tags and the new row's
+    // men / women / infants / party_size are recounted from those tags (issue 18, design Q4).
+    var left = row.people.slice();
+    var gone = [];
     if (c.all) {
-      cancelled = remaining; remaining = [];
+      gone = left; left = [];
     } else {
-      // Multiset removal: two members called "Sara Khan" are cancelled one at a time.
       for (var i = 0; i < c.cancel.length; i++) {
-        var at = remaining.indexOf(c.cancel[i]);
+        var at = findPerson_(left, c.cancel[i], row.people);
         if (at < 0) return { ok: false, error: 'invalid' };   // the Party changed since the lookup
-        cancelled.push(remaining.splice(at, 1)[0]);
+        gone.push(left.splice(at, 1)[0]);
       }
     }
+    var plain = function (p) { return p.name; };
+    var remaining = left.map(plain);
+    var cancelled = gone.map(plain);
     var status = remaining.length ? 'active' : 'cancelled';
     var noteParts = [(status === 'cancelled' ? 'Cancelled everyone: ' : 'Cancelled: ') + cancelled.join(', ')];
+    // A hand-typed line without a valid tag is in party_size but in none of men / women / infants: say so.
+    if (left.some(function (p) { return !p.category; })) noteParts.push(UNTAGGED_NOTE);
     var message = c.message;
     if (!message && status === 'active' && row.message) {
       message = row.message;   // keep e.g. allergy notes with the remaining guests
       noteParts.push('message carried over from row ' + row.rowNum);
     }
     setStatus_(table, row, 'superseded');
+    // Cancels are always accepted, before or after the deadline. The new row keeps the late flag and the
+    // Side of the row it replaces (a cancel never asks for a Side; the Party keeps its own, issue 15).
     var rowNum = appendRsvp_(table, {
-      timestamp: new Date(), type: 'cancel', email: row.email, phone: row.phone, partySize: remaining.length,
-      names: remaining, message: message, language: c.lang, status: status, replaces: String(row.rowNum),
-      note: noteParts.join('; '),
+      timestamp: now_(), type: 'cancel', email: row.email, phone: row.phone, side: row.side,
+      people: left, message: message, language: c.lang, status: status, replaces: String(row.rowNum),
+      late: row.late, note: noteParts.join('; '),
     });
     SpreadsheetApp.flush();
     ev = {
-      kind: 'cancel', lang: c.lang, email: row.email, phone: row.phone, greetName: firstWord_(row.names[0]),
-      names: remaining, cancelled: cancelled, remaining: remaining, status: status, message: c.message,
+      kind: 'cancel', lang: c.lang, side: row.side, email: row.email, phone: row.phone, greetName: firstWord_(row.names[0]),
+      names: remaining, cancelled: cancelled, remaining: remaining, people: left, counts: countCategories_(left),
+      cancelledPeople: gone.map(function (p) { return { name: p.name, category: p.category }; }),
+      status: status, message: c.message,
       rowNum: rowNum, replaces: String(row.rowNum), note: noteParts.join('; '),
       previous: [{ rowNum: row.rowNum, names: row.names }],
       totals: totalsOf_(table.rows), sheetUrl: sheetUrl_(),
@@ -393,7 +490,30 @@ function handleCancel_(body) {
   return result;
 }
 
-/** Lookup: names of the active Party matching BOTH email and phone — nothing else, ever. */
+/**
+ * Index in `people` of the person to cancel (multiset removal: two "Sara Khan" go one at a time), or -1.
+ * want = { name, category }; original = the Party before any removals. An exact name + category match wins, so
+ * with two people of the same name the right one drops. A plain name (category '') matches the first of that name.
+ * A tagged entry falls back to name only when NO ONE in the original Party had that exact { name, category } (the
+ * tag was edited since the lookup); if someone did (e.g. it was already cancelled earlier in this request), -1, so
+ * a duplicate request never silently cancels a same-name person of another category.
+ */
+function findPerson_(people, want, original) {
+  var j;
+  var byName = function (p) { return p.name === want.name; };
+  var exact = function (p) { return p.name === want.name && p.category === want.category; };
+  if (want.category) {
+    for (j = 0; j < people.length; j++) { if (exact(people[j])) return j; }
+    if ((original || people).some(exact)) return -1;
+  }
+  for (j = 0; j < people.length; j++) { if (byName(people[j])) return j; }
+  return -1;
+}
+
+/**
+ * Lookup: the active Party matching BOTH email and phone — its people and nothing else, ever.
+ * names: plain names (older pages); people: [{ name, category }] in the same order (category '' if untagged).
+ */
 function handleLookup_(emailRaw, phoneRaw) {
   var email = cleanEmail_(typeof emailRaw === 'string' ? emailRaw : '');
   var phone = typeof phoneRaw === 'string' ? phoneRaw : '';
@@ -403,7 +523,7 @@ function handleLookup_(emailRaw, phoneRaw) {
   var table = readRsvps_(getRsvpSheet_());
   var row = findActiveBoth_(table.rows, email, norm);
   if (!row || !row.names.length) return { ok: false, error: 'not_found' };
-  return { ok: true, names: row.names.slice() };
+  return { ok: true, names: row.names.slice(), people: row.people.map(function (p) { return { name: p.name, category: p.category }; }) };
 }
 
 /** Public count: aggregates only. */

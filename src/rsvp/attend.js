@@ -4,16 +4,21 @@ import { h, uid, setText, setAttrI18n, retranslate, animateIn, animateOut, scrol
 import { createField, createHoneypot, createAlert, errorKey, setBusy } from './fields.js';
 import { checkName, checkEmail, checkPhone, checkMessage, buildAttendPayload, cleanName, fullName } from './validate.js';
 import { icons, ringsSeal, rosette } from './ornaments.js';
+import { createCategory, CATEGORY_LABELS } from './category.js';
+import { needsSideChoice, resolveSide } from './side.js';
+import { createSideChoice } from './side-choice.js';
 
 const DRAFT_KEY = 'asmat-saima-rsvp-draft';
 
 /**
- * @param {object} ctx  { api, config, onSuccess(result) }
+ * @param {object} ctx  { api, config, side, onSuccess(result) }
+ *   side: 'asmat' | 'saima' | '' — read once from the link by rsvp/index.js (issue 15). Never shown; sent
+ *         with every attend reply. '' = bare/invalid link → the guest picks it (side-choice.js, issue 16).
  * @returns {{ el: HTMLElement, refresh(): void, focusStart(): void }}
  */
-export function createAttend({ api, config, onSuccess }) {
+export function createAttend({ api, config, side = '', onSuccess }) {
   const max = Math.max(1, Number(config.maxPartySize) || 20);
-  const members = [];                       // [{ li, first, last, medal, label, remove }]
+  const members = [];                       // [{ li, first, last, category, medal, label, remove }]
   let sending = false;
   let lastValues = null;                    // values of the last successful send ("Send another" prefill)
   let lastResult = null;
@@ -25,13 +30,18 @@ export function createAttend({ api, config, onSuccess }) {
     last: createField({ kind: 'last', label: 'form.lastName', check: checkName, onInput: save, name: 'last' }),
     email: createField({ kind: 'email', label: 'form.email', hint: 'form.emailHint', check: checkEmail, onInput: save }),
     phone: createField({ kind: 'phone', label: 'form.phone', hint: 'form.phoneHint', check: checkPhone, onInput: save }),
+    category: createCategory({ onChange: save }),   // Man · Woman · Child 0–3 (issue 17)
   };
+  // Bare/invalid link → required "Asmat's guest" / "Saima's guest" choice above the name fields (issue 16).
+  const sideChoice = needsSideChoice(side) ? createSideChoice({ onChange: save }) : null;
   const mainHeadId = uid('rsvp-main-h');
   const mainGroup = h('fieldset', { class: 'rsvp-group rsvp-group--main' },
     h('legend', { class: 'rsvp-group__legend', id: mainHeadId },
       h('span', { class: 'rsvp-group__title', i18n: 'form.mainHeading' })),
     h('p', { class: 'rsvp-group__note', i18n: 'form.mainNote' }),
+    sideChoice?.wrap,
     h('div', { class: 'rsvp-pair' }, main.first.wrap, main.last.wrap),
+    main.category.wrap,
     h('div', { class: 'rsvp-pair rsvp-pair--contact' }, main.email.wrap, main.phone.wrap),
   );
 
@@ -46,6 +56,7 @@ export function createAttend({ api, config, onSuccess }) {
   const membersGroup = h('fieldset', { class: 'rsvp-group rsvp-group--members' },
     h('legend', { class: 'rsvp-group__legend' }, h('span', { class: 'rsvp-group__title', i18n: 'form.membersHeading' })),
     h('p', { class: 'rsvp-group__note', i18n: 'form.membersNote' }),
+    h('p', { class: 'rsvp-group__note rsvp-group__note--category', i18n: 'form.category.hint' }),
     list,
     h('div', { class: 'rsvp-members__foot' }, addBtn, counter),
     maxLive,
@@ -84,6 +95,7 @@ export function createAttend({ api, config, onSuccess }) {
     const labelId = uid('rsvp-member');
     const first = createField({ kind: 'first', label: 'form.firstName', check: checkName, onInput: save, attrs: { autocomplete: 'off' }, name: 'member-first' });
     const last = createField({ kind: 'last', label: 'form.lastName', check: checkName, onInput: save, attrs: { autocomplete: 'off' }, name: 'member-last' });
+    const category = createCategory({ onChange: save });
     const medal = h('span', { class: 'rsvp-member__medal', 'aria-hidden': 'true' });
     const label = h('span', { class: 'rsvp-member__label', id: labelId });
     const remove = h('button', { type: 'button', class: 'rsvp-member__remove', html: icons.close });
@@ -91,10 +103,12 @@ export function createAttend({ api, config, onSuccess }) {
       h('div', { class: 'rsvp-member__head' }, medal, label),
       h('div', { class: 'rsvp-member__fields' }, first.wrap, last.wrap),
       remove,
+      h('div', { class: 'rsvp-member__category' }, category.wrap),
     );
-    const m = { li, first, last, medal, label, remove };
+    const m = { li, first, last, category, medal, label, remove };
     first.value = values.first || '';
     last.value = values.last || '';
+    category.value = values.category || '';
     remove.addEventListener('click', () => removeMember(m));
     members.push(m);
     list.append(li);
@@ -175,23 +189,26 @@ export function createAttend({ api, config, onSuccess }) {
   // ── Draft ────────────────────────────────────────────────────────────────
   function values() {
     return {
-      main: { first: main.first.value, last: main.last.value, email: main.email.value, phone: main.phone.value },
-      members: members.map((m) => ({ first: m.first.value, last: m.last.value })),
+      main: { first: main.first.value, last: main.last.value, email: main.email.value, phone: main.phone.value, category: main.category.value },
+      members: members.map((m) => ({ first: m.first.value, last: m.last.value, category: m.category.value })),
       message: message.value,
       website: hp.input.value,
+      ...(sideChoice ? { side: sideChoice.value } : {}),
     };
   }
   function saveDraft() {
     const v = values();
     delete v.website;
-    const empty = !v.message && !v.members.length && !Object.values(v.main).some(Boolean);
+    const empty = !v.message && !v.members.length && !v.side && !Object.values(v.main).some(Boolean);
     if (empty) session.del(DRAFT_KEY); else session.set(DRAFT_KEY, v);
   }
   function fill(v) {
     if (!v || typeof v !== 'object') return;
     const m = v.main || {};
     main.first.value = m.first; main.last.value = m.last; main.email.value = m.email; main.phone.value = m.phone;
+    main.category.value = m.category || '';
     message.value = v.message || '';
+    if (sideChoice) sideChoice.value = v.side || '';
     while (members.length) { const x = members.pop(); x.li.remove(); }
     (Array.isArray(v.members) ? v.members : []).slice(0, max - 1).forEach((x) => addMember(x || {}));
     renumber();
@@ -205,26 +222,31 @@ export function createAttend({ api, config, onSuccess }) {
     alert.hide();
 
     // Forgiving: silently drop member rows left completely empty (e.g. "Add" tapped twice).
-    const blanks = members.filter((m) => !cleanName(m.first.value) && !cleanName(m.last.value));
+    const blanks = members.filter((m) => !cleanName(m.first.value) && !cleanName(m.last.value) && !m.category.value);
     blanks.forEach((m) => removeMember(m, { focusNext: false }));
 
-    const fields = [main.first, main.last, main.email, main.phone, ...members.flatMap((m) => [m.first, m.last]), message];
+    // In page order, so focus lands on the first problem. Every empty category row gets its message (issue 17).
+    const fields = [main.first, main.last, main.category, main.email, main.phone,
+      ...members.flatMap((m) => [m.first, m.last, m.category]), message];
     const invalid = fields.filter((f) => f.validate());
-    if (invalid.length) {
+    const sideMissing = !!sideChoice?.validate();          // first in the form, so it gets focus first
+    if (sideMissing || invalid.length) {
       alert.show('validation.fixErrors');
       alert.el.dataset.kind = 'fix';
+      if (sideMissing) { sideChoice.focus(); scrollToEl(sideChoice.wrap, 'center'); return; }
       const f = invalid[0];
-      focusEl(f.input);
+      if (f.focus) f.focus(); else focusEl(f.input);
       scrollToEl(f.wrap, 'center');
       return;
     }
     if (1 + members.length > max) { alert.show('errors.partyTooLarge'); return; }
 
     const v = values();
-    const payload = buildAttendPayload(v, getLang());
+    const payload = buildAttendPayload(v, getLang(), resolveSide(side, v.side));
     // Show the cleaned names back in the form (trimmed/collapsed).
     main.first.value = payload.main.first; main.last.value = payload.main.last; main.email.value = payload.main.email;
     members.forEach((m, i) => { m.first.value = payload.members[i].first; m.last.value = payload.members[i].last; });
+    const sentPeople = [payload.main, ...payload.members].map((p) => ({ name: fullName(p), category: p.category }));
 
     sending = true;
     setBusy(submit, true, 'form.sending', 'form.submit');
@@ -239,11 +261,14 @@ export function createAttend({ api, config, onSuccess }) {
       alert.show(errorKey(res?.error));
       return;
     }
-    const names = Array.isArray(res.names) && res.names.length
-      ? res.names
-      : [fullName(payload.main), ...payload.members.map(fullName)];
+    // The answer's people ({ name, category }); an opaque (unreadable) answer falls back to what was sent.
+    const people = Array.isArray(res.people) && res.people.length
+      ? res.people
+      : Array.isArray(res.names) && res.names.length
+        ? res.names.map((n, i) => ({ name: n, category: sentPeople[i]?.category || '' }))
+        : sentPeople;
     lastValues = { ...v, website: '' };
-    lastResult = { names, replaced: res.replaced === true, email: payload.main.email };
+    lastResult = { people, replaced: res.replaced === true, email: payload.main.email };
     session.del(DRAFT_KEY);
     showDone();
     onSuccess?.(res);
@@ -251,10 +276,12 @@ export function createAttend({ api, config, onSuccess }) {
 
   // ── Confirmation ─────────────────────────────────────────────────────────
   function showDone() {
-    const { names, replaced, email } = lastResult;
+    const { people, replaced, email } = lastResult;
+    const names = people.map((p) => p.name);
     const titleId = uid('rsvp-done-title');
     const list = h('ol', { class: 'rsvp-party__list', role: 'list' },
-      names.map((n, i) => h('li', { class: 'rsvp-party__name', style: `--i:${i}` }, h('span', { class: 'rsvp-party__bullet', html: rosette() }), h('bdi', { text: n }))));
+      people.map((p, i) => h('li', { class: 'rsvp-party__name', style: `--i:${i}` }, h('span', { class: 'rsvp-party__bullet', html: rosette() }), h('bdi', { text: p.name }),
+        CATEGORY_LABELS[p.category] ? h('span', { class: 'rsvp-party__cat', i18n: CATEGORY_LABELS[p.category] }) : null)));
     done.replaceChildren(...[
       h('div', { class: 'rsvp-done__seal', html: ringsSeal() }),
       h('h3', { class: 'rsvp-done__title', id: titleId, tabindex: '-1', i18n: 'success.attendTitle' }),
@@ -279,7 +306,8 @@ export function createAttend({ api, config, onSuccess }) {
     done.hidden = true;
     form.hidden = false;
     alert.hide();
-    [main.first, main.last, main.email, main.phone, message].forEach((f) => f.setError(''));
+    [main.first, main.last, main.category, main.email, main.phone, message].forEach((f) => f.setError(''));
+    sideChoice?.setError('');
     if (lastValues) fill(lastValues);          // pre-filled: add or remove someone and resend
     saveDraft();
     scrollToEl(form, 'start');

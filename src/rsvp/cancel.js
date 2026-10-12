@@ -2,7 +2,7 @@
 import { getLang } from '../i18n/index.js';
 import { h, uid, retranslate, scrollToEl, focusEl, session } from './dom.js';
 import { createField, createHoneypot, createAlert, errorKey, setBusy } from './fields.js';
-import { checkEmail, checkPhone, checkMessage, cleanEmail, cleanMessage } from './validate.js';
+import { checkEmail, checkPhone, checkMessage, cleanEmail, cleanMessage, lookupPeople, cancelEntries, pickerTagKeys } from './validate.js';
 import { icons, rosetteSeal, rosette } from './ornaments.js';
 
 const DRAFT_KEY = 'asmat-saima-rsvp-cancel';
@@ -12,8 +12,8 @@ const DRAFT_KEY = 'asmat-saima-rsvp-cancel';
  * @returns {{ el, refresh(), focusStart() }}
  */
 export function createCancel({ api, onSuccess }) {
-  let names = [];          // Party from lookup
-  let boxes = [];          // checkbox inputs, index-aligned with names
+  let people = [];         // Party from lookup: [{ name, category }] (category '' from an older server / untagged line)
+  let boxes = [];          // checkbox inputs, index-aligned with people
   let busy = false;
   let step = 1;
   let found = null;        // { email, phone } used for the successful lookup
@@ -100,26 +100,32 @@ export function createCancel({ api, onSuccess }) {
       return;
     }
     found = { email: cleanEmail(email.value), phone: phone.value.trim() };
-    buildPicker(res.names);
+    buildPicker(lookupPeople(res));
     goStep(2);
   }
 
+  /**
+   * The list shows names; each box is index-aligned with a { name, category }, so two "Sara Khan" stay apart.
+   * A name that appears more than once also shows its category label ("Sara Khan · Woman"), text only.
+   */
   function buildPicker(list) {
-    names = list.slice();
+    people = list.slice();
     pickAlert.hide();
     message.reset();
     allBox.checked = false; allBox.indeterminate = false;
     pickList.replaceChildren();
-    boxes = names.map((name, i) => {
+    const tags = pickerTagKeys(people);
+    boxes = people.map(({ name }, i) => {
       const id = uid('rsvp-pick');
       const box = h('input', { type: 'checkbox', class: 'rsvp-check__input', id, value: String(i), on: { change: syncAll } });
       pickList.append(h('li', { class: 'rsvp-pick__item', style: `--i:${i}` },
         h('label', { class: 'rsvp-check', for: id }, box,
           h('span', { class: 'rsvp-check__box', html: icons.check }),
-          h('bdi', { class: 'rsvp-check__text', text: name }))));
+          h('bdi', { class: 'rsvp-check__text', text: name }),
+          tags[i] ? h('span', { class: 'rsvp-check__tag', i18n: tags[i] }) : null)));
       return box;
     });
-    allRow.hidden = names.length < 2;          // a Party of one: the single box says it all
+    allRow.hidden = people.length < 2;          // a Party of one: the single box says it all
     syncAll();
   }
 
@@ -141,7 +147,8 @@ export function createCancel({ api, onSuccess }) {
     e.preventDefault();
     if (busy) return;
     pickAlert.hide();
-    const chosen = names.filter((_, i) => boxes[i].checked);
+    const chosenPeople = people.filter((_, i) => boxes[i].checked);
+    const chosen = chosenPeople.map((p) => p.name);
     if (!chosen.length) {
       pickAlert.show('cancel.nothingSelected');
       pickGroup.classList.add('is-invalid');
@@ -149,10 +156,12 @@ export function createCancel({ api, onSuccess }) {
       return;
     }
     if (message.validate()) { focusEl(message.input); return; }
-    const all = chosen.length === names.length;
+    const all = chosen.length === people.length;
+    // Send { name, category } so the server drops exactly the ticked person (issue 18); plain name if untagged.
+    const cancelList = cancelEntries(chosenPeople);
     const payload = {
       action: 'cancel', lang: getLang(), email: found.email, phone: found.phone,
-      ...(all ? { all: true, cancel: chosen } : { cancel: chosen }),
+      ...(all ? { all: true, cancel: cancelList } : { cancel: cancelList }),
       message: cleanMessage(message.value), website: hp.input.value,
     };
     busy = true;
@@ -168,7 +177,7 @@ export function createCancel({ api, onSuccess }) {
     let cancelled = res.cancelled, remaining = res.remaining;
     if (!Array.isArray(cancelled) || !Array.isArray(remaining)) {   // opaque send: compute locally
       cancelled = chosen;
-      remaining = names.slice();
+      remaining = people.map((p) => p.name);
       chosen.forEach((n) => { const k = remaining.indexOf(n); if (k > -1) remaining.splice(k, 1); });
     }
     showDone(cancelled, remaining);
