@@ -1,5 +1,5 @@
 /**
- * Asmat & Saima · Nikah · RSVP backend (Google Apps Script web app, bound to the RSVP Google Sheet).
+ * Asmat & Saima · Walima · RSVP backend (Google Apps Script web app, bound to the RSVP Google Sheet).
  *
  * Files in this project (all share one global scope — order does not matter):
  *   Code.gs     ← you are here: settings, web-app entry points (doGet / doPost), the Sheet menu

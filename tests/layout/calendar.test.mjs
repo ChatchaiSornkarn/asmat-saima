@@ -11,8 +11,8 @@ const baseConfig = {
   venue: { line1: 'Säve Flygplatsväg 26', line2: 'Göteborg', mapQuery: 'Säve Flygplatsväg 26, 423 73 Säve, Sweden' },
 };
 const strings = {
-  title: 'Nikah of Asmat & Saima',
-  description: 'You are warmly invited to the Nikah of Asmat & Saima. We look forward to celebrating with you.',
+  title: 'Walima of Asmat & Saima',
+  description: 'You are warmly invited to the Walima of Asmat & Saima. We look forward to celebrating with you.',
   url: 'https://chatchaisornkarn.github.io/asmat-saima/',
   lang: 'en',
 };
@@ -56,8 +56,8 @@ test('all-day event while eventStart is null', () => {
   assert.ok(!ics.includes('VTIMEZONE'), 'no VTIMEZONE for an all-day event');
   assert.ok(!ics.includes('TZID'), 'no TZID for an all-day event');
   assert.equal(prop(ics, 'DTSTAMP'), 'DTSTAMP:20261002T083005Z');
-  assert.match(prop(ics, 'UID'), /^UID:nikah-20261213@/);
-  assert.equal(prop(ics, 'SUMMARY'), 'SUMMARY;LANGUAGE=en:Nikah of Asmat & Saima');
+  assert.match(prop(ics, 'UID'), /^UID:walima-20261213@/);
+  assert.equal(prop(ics, 'SUMMARY'), 'SUMMARY;LANGUAGE=en:Walima of Asmat & Saima');
   assert.equal(prop(ics, 'URL'), 'URL:https://chatchaisornkarn.github.io/asmat-saima/');
   assert.equal(prop(ics, 'LOCATION'), 'LOCATION:Säve Flygplatsväg 26\\, 423 73 Säve\\, Sweden');
   // VALARM one day before (09:00 the day before for all-day events)
@@ -112,9 +112,9 @@ test('TEXT escaping of backslash, semicolon, comma and newlines', () => {
 
 test('folding measures UTF-8 octets for Swedish, Thai and Urdu', () => {
   const samples = {
-    sv: 'Ni är varmt välkomna till Asmats och Saimas nikah. Vi ser fram emot att fira tillsammans med er på Säve Flygplatsväg 26, Göteborg – åäö ÅÄÖ.',
-    th: 'ขอเรียนเชิญท่านร่วมเป็นเกียรติในพิธีนิกาห์ของ Asmat และ Saima เรายินดีที่จะได้ร่วมเฉลิมฉลองกับท่าน ณ เมืองโกเธนเบิร์ก',
-    ur: 'آپ کو عصمت اور صائمہ کے نکاح میں شرکت کی پُرخلوص دعوت دی جاتی ہے۔ ہم آپ کے ساتھ جشن منانے کے منتظر ہیں۔',
+    sv: 'Ni är varmt välkomna till Asmats och Saimas walima. Vi ser fram emot att fira tillsammans med er på Säve Flygplatsväg 26, Göteborg – åäö ÅÄÖ.',
+    th: 'ขอเรียนเชิญท่านร่วมเป็นเกียรติในงานวะลีมะฮ์ของ Asmat และ Saima เรายินดีที่จะได้ร่วมเฉลิมฉลองกับท่าน ณ เมืองโกเธนเบิร์ก',
+    ur: 'آپ کو عصمت اور صائمہ کے ولیمے میں شرکت کی پُرخلوص دعوت دی جاتی ہے۔ ہم آپ کے ساتھ جشن منانے کے منتظر ہیں۔',
   };
   for (const [lang, description] of Object.entries(samples)) {
     const ics = buildIcs(baseConfig, { ...strings, lang, title: description.slice(0, 40), description }, { now });
@@ -154,7 +154,7 @@ test('Google Calendar link: all-day dates, then local times with ctz', () => {
   assert.equal(url.searchParams.get('action'), 'TEMPLATE');
   assert.equal(url.searchParams.get('dates'), '20261213/20261214');
   assert.equal(url.searchParams.get('ctz'), null);
-  assert.equal(url.searchParams.get('text'), 'Nikah of Asmat & Saima');
+  assert.equal(url.searchParams.get('text'), 'Walima of Asmat & Saima');
   assert.equal(url.searchParams.get('location'), baseConfig.venue.mapQuery);
   assert.ok(url.searchParams.get('details').includes(strings.url));
 

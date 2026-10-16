@@ -47,9 +47,9 @@ with sync_playwright() as p:
     pg.goto(BASE + '?lang=th', wait_until='networkidle'); ready(pg)
     check(pg.evaluate('document.documentElement.lang') == 'th', 'html lang=th')
     check(pg.evaluate('document.documentElement.dir') == 'ltr', 'dir=ltr')
-    check('นิกะห์' in pg.title(), 'title in Thai')
+    check('วะลีมะฮ์' in pg.title(), 'title in Thai')
     check(pg.evaluate("document.querySelector('[data-lang=th]').getAttribute('aria-pressed')") == 'true', 'TH pressed')
-    check(pg.evaluate("document.fonts.check('16px \"Noto Serif Thai\"', 'นิกะห์')"), 'Noto Serif Thai loaded')
+    check(pg.evaluate("document.fonts.check('16px \"Noto Serif Thai\"', 'วะลีมะฮ์')"), 'Noto Serif Thai loaded')
     check(not i18n_warnings(pg), f'no i18n warnings {i18n_warnings(pg)}')
     pg.context.close()
 
