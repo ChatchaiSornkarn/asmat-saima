@@ -359,7 +359,7 @@
 .rsvp-field--category { margin-block-start: var(--s-4); }
 .rsvp-seg { margin: 0; padding: 0; border: 0; min-inline-size: 0; }
 .rsvp-seg__track {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);   /* 3 options, or 2 for the main guest */
   padding: 3px;
   border: 1px solid var(--gold);
   border-radius: 999px;

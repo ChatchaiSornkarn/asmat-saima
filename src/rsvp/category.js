@@ -1,4 +1,5 @@
-// Category choice for one person row (2_main_idea issue 17, design Q2/Q7): Man · Woman · Child 0–3.
+// Category choice for one person row (2_main_idea issue 17, design Q2/Q7): Man · Woman · Child 0–3
+// (Man · Woman only for the main guest, who gives the family's email and phone).
 // A segmented control built from native radio buttons inside a fieldset, so it gets radiogroup semantics,
 // Tab-into-the-group / arrow-keys-between-options (mirrored for right-to-left Urdu) and form behaviour for
 // free. It starts empty and is required; checkCategory() gives the error key.
@@ -12,15 +13,17 @@ export const CATEGORY_LABELS = { man: 'form.category.man', woman: 'form.category
 /**
  * @param {object} [o]
  * @param {() => void} [o.onChange]  called after the guest picks an option
+ * @param {string[]} [o.categories]  the options offered (default: all of CATEGORIES)
  * @returns {{ wrap, inputs, value, validate(): string, setError(key): void, focus(): void, error: string }}
  */
 export function createCategory(o = {}) {
   const id = uid('rsvp-cat');
   const legendId = `${id}-legend`, errId = `${id}-err`;
   const name = `${id}-choice`;
+  const categories = o.categories || CATEGORIES;
 
-  const inputs = CATEGORIES.map((c) => h('input', { type: 'radio', class: 'rsvp-seg__input', name, value: c, id: `${id}-${c}` }));
-  const options = CATEGORIES.map((c, i) => h('label', { class: `rsvp-seg__opt rsvp-seg__opt--${c}`, for: inputs[i].id },
+  const inputs = categories.map((c) => h('input', { type: 'radio', class: 'rsvp-seg__input', name, value: c, id: `${id}-${c}` }));
+  const options = categories.map((c, i) => h('label', { class: `rsvp-seg__opt rsvp-seg__opt--${c}`, for: inputs[i].id },
     inputs[i], h('span', { class: 'rsvp-seg__text', i18n: CATEGORY_LABELS[c] })));
 
   const errText = h('span');
@@ -51,7 +54,7 @@ export function createCategory(o = {}) {
   }
 
   function validate() {
-    const key = checkCategory(current());
+    const key = checkCategory(current(), categories);
     setError(key);
     return key;
   }

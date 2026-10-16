@@ -2,7 +2,7 @@
 import { t, getLang, formatNumber } from '../i18n/index.js';
 import { h, uid, setText, setAttrI18n, retranslate, animateIn, animateOut, scrollToEl, focusEl, session, reducedMotion } from './dom.js';
 import { createField, createHoneypot, createAlert, errorKey, setBusy } from './fields.js';
-import { checkName, checkEmail, checkPhone, checkMessage, buildAttendPayload, cleanName, fullName } from './validate.js';
+import { checkName, checkEmail, checkPhone, checkMessage, buildAttendPayload, cleanName, fullName, MAIN_CATEGORIES } from './validate.js';
 import { icons, ringsSeal, rosette } from './ornaments.js';
 import { createCategory, CATEGORY_LABELS } from './category.js';
 import { needsSideChoice, resolveSide } from './side.js';
@@ -30,7 +30,7 @@ export function createAttend({ api, config, side = '', onSuccess }) {
     last: createField({ kind: 'last', label: 'form.lastName', check: checkName, onInput: save, name: 'last' }),
     email: createField({ kind: 'email', label: 'form.email', hint: 'form.emailHint', check: checkEmail, onInput: save }),
     phone: createField({ kind: 'phone', label: 'form.phone', hint: 'form.phoneHint', check: checkPhone, onInput: save }),
-    category: createCategory({ onChange: save }),   // Man · Woman · Child 0–3 (issue 17)
+    category: createCategory({ onChange: save, categories: MAIN_CATEGORIES }),   // Man · Woman (an adult gives the contact details)
   };
   // Bare/invalid link → required "Asmat's guest" / "Saima's guest" choice above the name fields (issue 16).
   const sideChoice = needsSideChoice(side) ? createSideChoice({ onChange: save }) : null;

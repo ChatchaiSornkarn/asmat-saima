@@ -139,6 +139,7 @@ function cleanSide_(v) {
 /**
  * Validates an attend body. Returns { error } or { value: { lang, side, email, phone, first, names, people, message } }.
  * Every person needs a category 'man' | 'woman' | 'infant' (issue 17) — a missing or unknown one is 'invalid'.
+ * The main guest (people[0]) must be 'man' or 'woman' (MAIN_CATEGORIES); 'infant' there is 'invalid' too.
  * party_too_large wins over other problems (same as the site's mock).
  */
 function validateAttend_(body, maxParty) {
@@ -168,7 +169,7 @@ function validateAttend_(body, maxParty) {
     var last = cleanPersonName_(p.last);
     if (!first || !last || first.length > LIMITS.name || last.length > LIMITS.name) return { error: 'invalid' };
     var category = cleanCategory_(p.category);
-    if (!category) return { error: 'invalid' };
+    if (!category || (i === 0 && MAIN_CATEGORIES.indexOf(category) < 0)) return { error: 'invalid' };
     var name = fullName_(first, last);
     names.push(name);
     party.push({ name: name, category: category });

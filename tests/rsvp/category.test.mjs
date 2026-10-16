@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { CATEGORIES, cleanCategory, checkCategory, cleanPersonName, validateAttend, buildAttendPayload } from '../../src/rsvp/validate.js';
+import { CATEGORIES, MAIN_CATEGORIES, cleanCategory, checkCategory, cleanPersonName, validateAttend, buildAttendPayload } from '../../src/rsvp/validate.js';
 import { createMock, countCategories } from '../../src/rsvp/mock.js';
 import en from '../../src/i18n/en.js';
 import sv from '../../src/i18n/sv.js';
@@ -44,6 +44,14 @@ test('validateAttend: every empty category row is reported (Main guest and each 
   assert.equal(v.ok, false);
   assert.deepEqual(v.errors, { 'main.category': 'validation.category', 'members.0.category': 'validation.category', 'members.2.category': 'validation.category' });
   assert.equal(validateAttend(family()).ok, true);
+});
+
+test('the main guest is Man or Woman only: Child 0–3 is offered to members, refused for the main guest', () => {
+  assert.deepEqual(MAIN_CATEGORIES, ['man', 'woman']);
+  assert.equal(checkCategory('infant', MAIN_CATEGORIES), 'validation.category');
+  assert.equal(checkCategory('Woman', MAIN_CATEGORIES), '');
+  const v = validateAttend(family({ main: { ...family().main, category: 'infant' } }));
+  assert.deepEqual(v.errors, { 'main.category': 'validation.category' });
 });
 
 test('buildAttendPayload sends each category and replaces an em dash in names', () => {
@@ -148,11 +156,14 @@ test('createCategory: starts empty, required message on submit, cleared by a cho
   assert.equal(c.value, 'woman');
   c.value = 'nope';
   assert.equal(c.value, '');
+
+  const main = createCategory({ categories: ['man', 'woman'] });
+  assert.deepEqual(main.inputs.map((x) => x.value), ['man', 'woman'], 'main guest: no Child 0–3 option');
 });
 
 test('attend form wiring: every row has a category, validated in page order, sent and shown back', async () => {
   const src = await readFile(path.join(root, 'src/rsvp/attend.js'), 'utf8');
-  assert.match(src, /category: createCategory\(/, 'Main guest row');
+  assert.match(src, /category: createCategory\(\{ onChange: save, categories: MAIN_CATEGORIES \}\)/, 'Main guest row: Man · Woman only');
   assert.match(src, /const category = createCategory\(/, 'each member row');
   assert.match(src, /\[main\.first, main\.last, main\.category, main\.email, main\.phone,\s*\.\.\.members\.flatMap\(\(m\) => \[m\.first, m\.last, m\.category\]\), message\]/,
     'every row validated, in page order (focus goes to the first problem)');

@@ -109,7 +109,7 @@ asmat-saima/
 │  │  ├─ index.js        section shell: heading, deadline, count, tabs, late notice
 │  │  ├─ attend.js       "We're coming" form (whole Party)
 │  │  ├─ cancel.js       "Can't come" form: lookup by email + phone, tick who can't come
-│  │  ├─ category.js     Man · Woman · Child 0–3 choice per person
+│  │  ├─ category.js     Man · Woman · Child 0–3 choice per person (Man · Woman for the main guest)
 │  │  ├─ side.js         reads ?side=asmat|saima from the link (pure)
 │  │  ├─ side-choice.js  "Asmat's guest" / "Saima's guest" choice on a bare link
 │  │  ├─ deadline.js     reply-by date: open / late checks in Göteborg time (pure)

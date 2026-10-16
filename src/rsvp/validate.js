@@ -21,6 +21,8 @@ export function cleanPersonName(v) {
 
 /** Category of one person (issue 17): Man · Woman · Child 0–3. Stored in English. */
 export const CATEGORIES = ['man', 'woman', 'infant'];
+/** The main guest gives the family's email and phone, so they are an adult: Man · Woman only. */
+export const MAIN_CATEGORIES = ['man', 'woman'];
 
 /** 'man' / ' Woman ' → the category; anything else → ''. */
 export function cleanCategory(v) {
@@ -63,9 +65,9 @@ export function checkPhone(v) {
   if (s.length > LIMITS.phone) return 'validation.tooLong';
   return isValidPhone(s) ? '' : 'validation.phone';
 }
-/** Every person row needs one of the three categories; the choice starts empty. */
-export function checkCategory(v) {
-  return cleanCategory(v) ? '' : 'validation.category';
+/** Every person row needs one of the categories it offers (all three, or MAIN_CATEGORIES); the choice starts empty. */
+export function checkCategory(v, allowed = CATEGORIES) {
+  return allowed.includes(cleanCategory(v)) ? '' : 'validation.category';
 }
 export function checkMessage(v) {
   return cleanMessage(v).length > LIMITS.message ? 'validation.tooLong' : '';
@@ -87,7 +89,7 @@ export function validateAttend(payload, maxPartySize = 20) {
   put('main.last', checkName(main.last));
   put('main.email', checkEmail(main.email));
   put('main.phone', checkPhone(main.phone));
-  put('main.category', checkCategory(main.category));
+  put('main.category', checkCategory(main.category, MAIN_CATEGORIES));
   members.forEach((m, i) => {
     put(`members.${i}.first`, checkName(m?.first));
     put(`members.${i}.last`, checkName(m?.last));
