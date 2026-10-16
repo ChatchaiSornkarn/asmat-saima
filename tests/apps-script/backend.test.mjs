@@ -794,6 +794,13 @@ describe('category per person (2_main_idea issue 17)', () => {
     assert.deepEqual(b.get({ action: 'count' }), { ok: true, guests: 23, households: 2 });
   });
 
+  test('the main guest cannot be an infant (Man · Woman only): invalid, nothing written', () => {
+    const b = fresh();
+    assert.deepEqual(b.post(family({ category: 'infant' })), { ok: false, error: 'invalid' });
+    assert.equal(b.rows().length, 0);
+    assert.equal(b.post(family({ category: 'woman' })).ok, true);
+  });
+
   test('a POST with a missing or invalid category writes nothing and sends nothing', () => {
     const b = fresh();
     const bads = [undefined, null, '', ' ', 'child', 'boy', 'men', 'infants', 'girl', 1, true, ['man'], { v: 'man' }];

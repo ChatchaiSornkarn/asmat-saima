@@ -59,6 +59,7 @@ var RSVP_HEADERS = ['timestamp', 'type', 'email', 'phone', 'side', 'party_size',
  * The script writes the matching men / women / infants counts; party_size = men + women + infants.
  */
 var CATEGORIES = ['man', 'woman', 'infant'];
+var MAIN_CATEGORIES = ['man', 'woman'];   // the main guest gives the family's email and phone: an adult
 var CATEGORY_COLUMNS = { man: 'men', woman: 'women', infant: 'infants' };
 var NAME_TAG_SEP = ' — ';   // space, EM DASH, space. Names never contain an em dash (cleanPersonName_ replaces it).
 // Added to a cancel row's note when a remaining `names` line has no valid tag, so men + women + infants < party_size.
