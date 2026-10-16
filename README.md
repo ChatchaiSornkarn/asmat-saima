@@ -1,6 +1,6 @@
-# Asmat & Saima — Nikah invitation
+# Asmat & Saima — Walima invitation
 
-The wedding invitation website for the **Nikah of Asmat & Saima**, Sunday 13 December 2026, Grand Plaza Bröllop & Konferens, Göteborg.
+The wedding invitation website for the **Walima of Asmat & Saima**, Sunday 13 December 2026, Grand Plaza Bröllop & Konferens, Göteborg.
 
 Guests open a sealed envelope, the arched doors swing open, and they see the invitation postcard. Below it are
 directions, "Add to calendar", a public guest count, and an RSVP form where one person can register their whole family,
@@ -177,7 +177,7 @@ placement are listed in [`assets/art/README.md`](assets/art/README.md). To recre
 
 The Swedish, Thai and Urdu texts on the site (`src/i18n/*.js`) and in the emails (`apps-script/Strings.gs`) are
 **DRAFT** translations. A native speaker should proofread them before the link goes to guests, checking for a respectful
-Nikah tone. In the Sheet, **Wedding RSVP → Email me sample confirmations** sends you every email to check.
+Walima tone. In the Sheet, **Wedding RSVP → Email me sample confirmations** sends you every email to check.
 Run `node tests/i18n/check-keys.mjs` after editing a strings file.
 
 ## More detail

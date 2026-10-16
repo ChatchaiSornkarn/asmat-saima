@@ -318,7 +318,7 @@ function renderGuestEmail_(ev, cfg) {
   var h = '';
   h += rosette_(24) + spacer_(14);
   h += caps_(S.kicker[variant], t) + spacer_(12);
-  h += '<div style="font-family:' + (lang === 'en' || lang === 'sv' ? MAIL_.serif + ';font-style:italic' : t.body) + ';font-size:17px;line-height:1.4;color:' + MAIL_.muted + ';">' + esc_(S.nikahOf) + '</div>';
+  h += '<div style="font-family:' + (lang === 'en' || lang === 'sv' ? MAIL_.serif + ';font-style:italic' : t.body) + ';font-size:17px;line-height:1.4;color:' + MAIL_.muted + ';">' + esc_(S.walimaOf) + '</div>';
   h += namesLine_(48) + spacer_(16) + divider_() + spacer_(24);
   if (greetingHtml) h += para_(greetingHtml, t, 'font-size:' + (t.bodySize + 2) + 'px;') + spacer_(10);
   h += para_(esc_(S.intro[variant]), t) + spacer_(22);
@@ -371,7 +371,7 @@ function renderGuestEmail_(ev, cfg) {
 
   // ── Plain text ──
   var L = [];
-  L.push('Asmat & Saima — ' + S.nikahOf);
+  L.push('Asmat & Saima — ' + S.walimaOf);
   L.push(S.kicker[variant]);
   L.push('');
   if (greeting) L.push(greeting);

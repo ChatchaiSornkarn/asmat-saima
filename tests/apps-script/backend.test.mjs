@@ -424,7 +424,7 @@ describe('emails', () => {
       en: { subj: /Your RSVP is confirmed/, date: 'Sunday, 13 December 2026', dir: 'ltr' },
       sv: { subj: /Ditt OSA är bekräftat/, date: 'Söndag 13 december 2026', dir: 'ltr' },
       th: { subj: /ยืนยันการตอบรับ/, date: 'วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569', dir: 'ltr' },
-      ur: { subj: /نکاح/, date: 'بروز اتوار، 13 دسمبر 2026ء', dir: 'rtl' },
+      ur: { subj: /ولیمہ/, date: 'بروز اتوار، 13 دسمبر 2026ء', dir: 'rtl' },
     };
     for (const [lang, e] of Object.entries(expect)) {
       const b = fresh();

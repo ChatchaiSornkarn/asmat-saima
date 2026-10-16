@@ -242,7 +242,7 @@
 }
 
 .postcard__invited,
-.postcard__nikah,
+.postcard__walima,
 .postcard__date,
 .postcard__time,
 .postcard__venue {
@@ -261,7 +261,7 @@
   line-height: 1.5;
   color: var(--pc-caps);
 }
-.postcard__nikah {
+.postcard__walima {
   display: block;
   font-size: max(26px, calc(var(--u) * 62 * var(--k) * var(--fit)));
   font-weight: 600;
@@ -400,22 +400,22 @@
 @container postcard (aspect-ratio < 0.48) { .postcard__sheet { --k: 1.26; --ka: 1.28; } }
 
 /* ── Thai & Urdu: no case, no tracking, taller lines ───────────────────── */
-:lang(th) .postcard__invited, :lang(th) .postcard__nikah, :lang(th) .postcard__date,
+:lang(th) .postcard__invited, :lang(th) .postcard__walima, :lang(th) .postcard__date,
 :lang(th) .postcard__time, :lang(th) .postcard__map, :lang(th) .postcard__venue-line {
   letter-spacing: 0; margin-inline-end: 0;
 }
 :lang(th) .postcard__invited { line-height: 1.75; font-size: max(13px, calc(var(--u) * 30 * var(--k) * var(--fit))); font-weight: 500; }
-:lang(th) .postcard__nikah { line-height: 1.5; font-size: max(26px, calc(var(--u) * 60 * var(--k) * var(--fit))); font-weight: 600; }
+:lang(th) .postcard__walima { line-height: 1.5; font-size: max(26px, calc(var(--u) * 60 * var(--k) * var(--fit))); font-weight: 600; }
 :lang(th) .postcard__of { font-family: var(--font-serif); font-size: max(15px, calc(var(--u) * 34 * var(--k) * var(--fit))); line-height: 1.6; }
 :lang(th) .postcard__date { font-size: max(13px, calc(var(--u) * 31 * var(--k) * var(--fit))); line-height: 1.7; }
 :lang(th) .postcard__map { font-size: max(12px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.7; }
 
-:lang(ur) .postcard__invited, :lang(ur) .postcard__nikah, :lang(ur) .postcard__date,
+:lang(ur) .postcard__invited, :lang(ur) .postcard__walima, :lang(ur) .postcard__date,
 :lang(ur) .postcard__time, :lang(ur) .postcard__map, :lang(ur) .postcard__venue-line {
   letter-spacing: 0; margin-inline-end: 0; text-transform: none;
 }
 :lang(ur) .postcard__invited { line-height: 2; font-size: max(11.5px, calc(var(--u) * 35 * var(--k) * var(--fit))); font-weight: 400; }
-:lang(ur) .postcard__nikah { line-height: 1.9; font-size: max(21px, calc(var(--u) * 58 * var(--k) * var(--fit))); font-weight: 400; padding-block: 0.1em; }
+:lang(ur) .postcard__walima { line-height: 1.9; font-size: max(21px, calc(var(--u) * 58 * var(--k) * var(--fit))); font-weight: 400; padding-block: 0.1em; }
 :lang(ur) .postcard__of { font-family: var(--font-serif); font-size: max(13px, calc(var(--u) * 38 * var(--k) * var(--fit))); line-height: 2; }
 :lang(ur) .postcard__date { font-size: max(11.5px, calc(var(--u) * 36 * var(--k) * var(--fit))); line-height: 2; font-weight: 400; }
 :lang(ur) .postcard__map { font-size: max(10px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.9; font-weight: 400; }

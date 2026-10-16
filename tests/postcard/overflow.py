@@ -23,7 +23,7 @@ CHECK = r"""
   const couple = document.querySelector('.postcard__couple');
   const s = sheet.getBoundingClientRect();
   const coupleTop = couple.getBoundingClientRect().top - s.top;
-  const sel = ['.postcard__invited', '.postcard__nikah', '.postcard__of', '.postcard__name--1', '.postcard__name--2',
+  const sel = ['.postcard__invited', '.postcard__walima', '.postcard__of', '.postcard__name--1', '.postcard__name--2',
                '.postcard__rings', '.postcard__laurel', '.postcard__date', '.postcard__time:not([hidden])', '.postcard__venue-line--1',
                '.postcard__venue-line--2'];
   const problems = [];

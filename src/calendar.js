@@ -19,7 +19,7 @@
 // Files › Downloads. The typed Blob gives Safari the MIME type it needs. The most reliable iOS path of all
 // is a real hosted .ics file — set config.icsUrl to one and iPhone/iPad navigate to it instead.
 
-export const ICS_FILENAME = 'nikah-asmat-saima.ics';
+export const ICS_FILENAME = 'walima-asmat-saima.ics';
 const UID_DOMAIN = 'asmat-saima.invite';
 const DEFAULT_DURATION_MIN = 4 * 60;
 
@@ -187,7 +187,7 @@ export function buildIcs(config, strings, { now = new Date() } = {}) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Asmat & Saima//Nikah Invitation//EN',
+    'PRODID:-//Asmat & Saima//Walima Invitation//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ];
@@ -213,7 +213,7 @@ export function buildIcs(config, strings, { now = new Date() } = {}) {
   lines.push(
     'BEGIN:VEVENT',
     // Stable UID: adding the event again (e.g. after the time is announced) updates rather than duplicates.
-    `UID:nikah-${ymd(parseDate(config.eventDate))}@${UID_DOMAIN}`,
+    `UID:walima-${ymd(parseDate(config.eventDate))}@${UID_DOMAIN}`,
     `DTSTAMP:${utcStamp(now)}`,
     // A timed version supersedes an earlier all-day import of the same UID.
     `SEQUENCE:${ev.allDay ? 0 : 1}`,

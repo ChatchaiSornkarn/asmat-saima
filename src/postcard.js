@@ -59,7 +59,7 @@ export function mountPostcard(el, config) {
       <h1 id="postcard-title" class="postcard__heading">
         <span class="postcard__invited pc-in" style="--i:1" data-i18n="postcard.invitedTo">${esc(t('postcard.invitedTo'))}</span>
         ${sp(28)}
-        <span class="postcard__nikah pc-in" style="--i:2" data-i18n="postcard.nikah">${esc(t('postcard.nikah'))}</span>
+        <span class="postcard__walima pc-in" style="--i:2" data-i18n="postcard.walima">${esc(t('postcard.walima'))}</span>
         ${sp(16)}
         <span class="pc-in pc-divider-wrap" style="--i:3" aria-hidden="true">${divider('pc-divider--top')}</span>
         ${sp(14)}
