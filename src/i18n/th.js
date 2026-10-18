@@ -1,14 +1,14 @@
 // DRAFT — to be proofread by a native speaker before launch (issue 12)
 // ภาษาไทย. Mirrors en.js exactly (same keys, same {placeholders}). Thai has no plural
 // forms, so plural objects use `other` only.
-// Register: formal and polite — guests are addressed as ท่าน, the event is งานวะลีมะฮ์,
+// Register: formal and polite — guests are addressed as ท่าน, the event is งานมงคลสมรส,
 // years follow the Buddhist Era (พ.ศ.) as on Thai wedding cards. Thai sentences take no
 // full stop; a space separates clauses. The couple's names stay in Latin script.
 
 export default {
   meta: {
-    title: 'Asmat & Saima · งานวะลีมะฮ์ · 13 ธันวาคม 2569',
-    description: 'ขอเรียนเชิญร่วมเป็นเกียรติในงานวะลีมะฮ์ของ Asmat & Saima วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569 ณ เมืองโกเธนเบิร์ก ประเทศสวีเดน',
+    title: 'Asmat & Saima · งานมงคลสมรส · 13 ธันวาคม 2569',
+    description: 'ขอเรียนเชิญร่วมเป็นเกียรติในงานมงคลสมรสของ Asmat & Saima วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569 ณ เมืองโกเธนเบิร์ก ประเทศสวีเดน',
   },
 
   switcher: {
@@ -24,7 +24,7 @@ export default {
 
   postcard: {
     invitedTo: 'ขอเรียนเชิญร่วมเป็นเกียรติในงาน',
-    walima: 'วะลีมะฮ์',
+    wedding: 'มงคลสมรส',
     of: 'ระหว่าง',
     date: 'วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569',
     time: 'เวลา {time} น.',
@@ -47,8 +47,8 @@ export default {
     calendarGoogle: 'Google ปฏิทิน',
     calendarGoogleSub: 'เปิดในแท็บใหม่',
     close: 'ปิด',
-    eventTitle: 'งานวะลีมะฮ์ของ Asmat & Saima',
-    eventDetails: 'ขอเรียนเชิญร่วมเป็นเกียรติในงานวะลีมะฮ์ของ Asmat & Saima เรารอคอยที่จะได้ร่วมฉลองวันสำคัญนี้กับท่าน',
+    eventTitle: 'งานมงคลสมรสของ Asmat & Saima',
+    eventDetails: 'ขอเรียนเชิญร่วมเป็นเกียรติในงานมงคลสมรสของ Asmat & Saima เรารอคอยที่จะได้ร่วมฉลองวันสำคัญนี้กับท่าน',
     allDay: 'ตลอดวัน',
   },
 

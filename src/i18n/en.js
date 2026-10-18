@@ -5,8 +5,8 @@
 
 export default {
   meta: {
-    title: 'Asmat & Saima · Walima · 13 December 2026',
-    description: 'You are warmly invited to the Walima of Asmat & Saima — Sunday, 13 December 2026, Göteborg.',
+    title: 'Asmat & Saima · Wedding · 13 December 2026',
+    description: 'You are warmly invited to the Wedding of Asmat & Saima — Sunday, 13 December 2026, Göteborg.',
   },
 
   switcher: {
@@ -22,7 +22,7 @@ export default {
 
   postcard: {
     invitedTo: 'You are warmly invited to the',
-    walima: 'Walima',
+    wedding: 'Wedding',
     of: 'of',
     date: 'Sunday, 13 December 2026',
     time: 'at {time}',
@@ -45,8 +45,8 @@ export default {
     calendarGoogle: 'Google Calendar',
     calendarGoogleSub: 'Opens in a new tab',
     close: 'Close',
-    eventTitle: 'Walima of Asmat & Saima',
-    eventDetails: 'You are warmly invited to the Walima of Asmat & Saima. We look forward to celebrating with you.',
+    eventTitle: 'Wedding of Asmat & Saima',
+    eventDetails: 'You are warmly invited to the Wedding of Asmat & Saima. We look forward to celebrating with you.',
     allDay: 'All day',
   },
 
