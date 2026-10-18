@@ -9,7 +9,7 @@
 //    already cross-fades the page (View Transitions, or a [data-i18n] text fade
 //    as fallback — see src/styles/switcher.css). Give dynamic text nodes the
 //    class `i18n-fade` to have them join the fallback fade.
-//  • formatTime('14:00') — extra helper: '2 pm' · 'kl. 14.00' · '14.00' (th) · 'دوپہر 2 بجے'.
+//  • formatTime('14:00') — extra helper: '14:00' · 'kl. 14.00' · '14.00' (th) · 'دوپہر 2 بجے'.
 //
 //  Thai dates use the Buddhist Era (พ.ศ. 2569), which is Intl's default for th-TH
 //  and what formal Thai wedding cards print. Pass { calendar: 'gregory' } to override.
@@ -352,10 +352,8 @@ export function formatTime(hhmm) {
       const h12 = h % 12 || 12;
       return `${period} ${min === '00' ? h12 : `${h12}:${min}`} بجے`;  // دوپہر 2 بجے
     }
-    default: {
-      const h12 = h % 12 || 12;
-      return `${min === '00' ? h12 : `${h12}:${min}`} ${h < 12 ? 'am' : 'pm'}`; // 2 pm
-    }
+    default:
+      return `${String(h).padStart(2, '0')}:${min}`;      // 14:00, as on Swedish cards
   }
 }
 

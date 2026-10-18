@@ -12,7 +12,7 @@
 
 import { archPath } from './art/arch.js';
 import { rosette, divider, laurel, rings, pin } from './art/ornaments.js';
-import { t, onLangChange, applyTranslations, getLocale } from './i18n/index.js';
+import { t, onLangChange, applyTranslations, formatTime } from './i18n/index.js';
 import { mapsUrl } from './maps.js';
 
 const ART = {
@@ -104,13 +104,7 @@ export function mountPostcard(el, config) {
   // ── Time line (only when config.eventStart is set) ───────────────────────
   const renderTime = () => {
     if (!config.eventStart) { timeEl.hidden = true; timeEl.textContent = ''; return; }
-    const [hh, mm] = String(config.eventStart).split(':').map(Number);
-    let time;
-    try {
-      time = new Intl.DateTimeFormat(getLocale(), { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
-        .format(new Date(Date.UTC(2026, 11, 13, hh, mm || 0)));
-    } catch { time = config.eventStart; }
-    timeEl.textContent = t('postcard.time', { time });
+    timeEl.textContent = t('postcard.time', { time: formatTime(config.eventStart) });
     timeEl.hidden = false;
   };
   renderTime();
@@ -145,6 +139,8 @@ export function mountPostcard(el, config) {
   // ── Fit: the names line scales to the column width; if a language/viewport still makes the column
   //    taller than its zone, every line shrinks a touch (--fit) until it fits.
   const names = el.querySelector('.postcard__names');
+  const when = el.querySelector('.postcard__when');
+  const dateEl = el.querySelector('.postcard__date');
   let fitting = false;
   const fit = () => {
     if (fitting) return;
@@ -156,6 +152,12 @@ export function mountPostcard(el, config) {
     const lineW = () => { const a = names.firstElementChild.getBoundingClientRect(), b = names.lastElementChild.getBoundingClientRect(); return Math.max(b.right, a.right) - Math.min(a.left, b.left); };
     const nw = lineW();
     if (nw > cw) names.style.setProperty('--nfit', (Math.floor((cw / nw) * 0.99 * 1000) / 1000).toString());
+    // the date and the time share one line: shrink both (--wfit) rather than let the time wrap
+    when.style.setProperty('--wfit', '1');
+    if (!timeEl.hidden) {
+      const ww = dateEl.offsetWidth + timeEl.offsetWidth;
+      if (ww > cw) when.style.setProperty('--wfit', (Math.floor((cw / ww) * 0.98 * 1000) / 1000).toString());
+    }
     keepInsideDome();
     let f = 1;
     // layout boxes only (offset*), so entrance transforms never count as overflow

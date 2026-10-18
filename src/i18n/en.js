@@ -25,7 +25,7 @@ export default {
     wedding: 'Wedding',
     of: 'of',
     date: 'Sunday, 13 December 2026',
-    time: 'at {time}',
+    time: '{time}',
     mapAria: 'Open the address in maps',
   },
 
