@@ -22,7 +22,7 @@ export default {
   // eventStart null = all-day calendar entry (Q21).
   eventDate: '2026-12-13',
   eventStart: '16:00',       // guests are invited from 16:00
-  eventEnd: null,            // e.g. '20:00' (defaults to start + 4h)
+  eventEnd: '00:00',         // midnight; calendar entries only (defaults to start + 4h)
   timeZone: 'Europe/Stockholm',
 
   venue: {

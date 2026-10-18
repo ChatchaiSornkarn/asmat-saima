@@ -71,8 +71,8 @@ with sync_playwright() as pw:
     check(btn.get_attribute('aria-expanded') == 'false', 'aria-expanded=false after close')
     check(p.evaluate("document.activeElement.getAttribute('aria-controls')") == 'calendar-dialog', 'focus returns to button')
     href = p.locator('[data-cal=google]').get_attribute('href')
-    check('dates=20261213T160000%2F20261213T200000' in href or 'dates=20261213T160000/20261213T200000' in href,
-          'Google link starts at 16:00')
+    check('dates=20261213T160000%2F20261214T000000' in href or 'dates=20261213T160000/20261214T000000' in href,
+          'Google link runs 16:00 to midnight')
     # .ics download
     btn.click()
     p.wait_for_timeout(400)
