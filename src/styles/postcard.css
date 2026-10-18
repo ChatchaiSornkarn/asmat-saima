@@ -327,16 +327,17 @@
 .postcard__laurel--start { margin-inline-end: calc(var(--u) * -2); }
 .postcard__laurel--end { margin-inline-start: calc(var(--u) * -2); }
 
-.postcard__when { margin: 0; line-height: 1.4; }
+.postcard__when { margin: 0; line-height: 1.4; font-size: calc(max(11px, calc(var(--u) * 27 * var(--k) * var(--fit))) * var(--wfit, 1)); }
+/* date and time share one line ("… 2026 · 16:00"); postcard.js shrinks the line (--wfit) if it is too wide */
 .postcard__date, .postcard__time {
-  display: block;
-  font-size: max(11px, calc(var(--u) * 27 * var(--k) * var(--fit)));
+  display: inline-block;
+  white-space: nowrap;
   font-weight: 500;
   letter-spacing: 0.2em;
-  margin-inline-end: -0.2em;
   color: var(--pc-date);
 }
-.postcard__time { font-size: max(10px, calc(var(--u) * 22 * var(--k) * var(--fit))); margin-block-start: 0.35em; color: var(--pc-caps); }
+.postcard__date:last-child, .postcard__time { margin-inline-end: -0.2em; }
+.postcard__time::before { content: '·' / ''; margin-inline: 0.25em 0.45em; }
 .postcard__time[hidden] { display: none; }
 
 .postcard__venue { margin: 0; line-height: 1.55; }
@@ -404,11 +405,11 @@
 :lang(th) .postcard__time, :lang(th) .postcard__map, :lang(th) .postcard__venue-line {
   letter-spacing: 0; margin-inline-end: 0;
 }
-:lang(th) .postcard__invited { line-height: 1.75; font-size: max(12px, calc(var(--u) * 30 * var(--k) * var(--fit))); font-weight: 500; }
-:lang(th) .postcard__wedding { line-height: 1.5; font-size: max(23px, calc(var(--u) * 60 * var(--k) * var(--fit))); font-weight: 600; }
-:lang(th) .postcard__of { font-family: var(--font-serif); font-size: max(14px, calc(var(--u) * 34 * var(--k) * var(--fit))); line-height: 1.6; }
-:lang(th) .postcard__date { font-size: max(12px, calc(var(--u) * 31 * var(--k) * var(--fit))); line-height: 1.7; }
-:lang(th) .postcard__map { font-size: max(11px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.7; }
+:lang(th) .postcard__invited { line-height: 1.75; font-size: max(13px, calc(var(--u) * 30 * var(--k) * var(--fit))); font-weight: 500; }
+:lang(th) .postcard__wedding { line-height: 1.5; font-size: max(26px, calc(var(--u) * 60 * var(--k) * var(--fit))); font-weight: 600; }
+:lang(th) .postcard__of { font-family: var(--font-serif); font-size: max(15px, calc(var(--u) * 34 * var(--k) * var(--fit))); line-height: 1.6; }
+:lang(th) .postcard__when { font-size: calc(max(13px, calc(var(--u) * 31 * var(--k) * var(--fit))) * var(--wfit, 1)); line-height: 1.7; }
+:lang(th) .postcard__map { font-size: max(12px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.7; }
 
 :lang(ur) .postcard__invited, :lang(ur) .postcard__wedding, :lang(ur) .postcard__date,
 :lang(ur) .postcard__time, :lang(ur) .postcard__map, :lang(ur) .postcard__venue-line {
@@ -417,7 +418,8 @@
 :lang(ur) .postcard__invited { line-height: 2; font-size: max(11.5px, calc(var(--u) * 35 * var(--k) * var(--fit))); font-weight: 400; }
 :lang(ur) .postcard__wedding { line-height: 1.9; font-size: max(21px, calc(var(--u) * 58 * var(--k) * var(--fit))); font-weight: 400; padding-block: 0.1em; }
 :lang(ur) .postcard__of { font-family: var(--font-serif); font-size: max(13px, calc(var(--u) * 38 * var(--k) * var(--fit))); line-height: 2; }
-:lang(ur) .postcard__date { font-size: max(11.5px, calc(var(--u) * 36 * var(--k) * var(--fit))); line-height: 2; font-weight: 400; }
+:lang(ur) .postcard__when { font-size: calc(max(11.5px, calc(var(--u) * 36 * var(--k) * var(--fit))) * var(--wfit, 1)); line-height: 2; }
+:lang(ur) .postcard__date, :lang(ur) .postcard__time { font-weight: 400; }
 :lang(ur) .postcard__map { font-size: max(10px, calc(var(--u) * 26 * var(--k) * var(--fit))); line-height: 1.9; font-weight: 400; }
 /* the street address is Latin script — keep it in the card's caps face */
 .postcard__venue-line { unicode-bidi: plaintext; }
