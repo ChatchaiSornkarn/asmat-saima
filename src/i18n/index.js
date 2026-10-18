@@ -31,7 +31,7 @@ const LANGS = {
     fonts: {
       query: 'family=Noto+Serif+Thai:wght@400;500;600;700&display=swap',
       keep: ['thai'],
-      probes: [['Noto Serif Thai', 'วะลีมะฮ์ท่าน']],
+      probes: [['Noto Serif Thai', 'มงคลสมรสท่าน']],
       weights: [400, 500, 600, 700],
     },
   },
@@ -40,7 +40,7 @@ const LANGS = {
     fonts: {
       query: 'family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap',
       keep: ['arabic'],
-      probes: [['Noto Nastaliq Urdu', 'ولیمہ۔'], ['Noto Naskh Arabic', 'ولیمہ۔']],
+      probes: [['Noto Nastaliq Urdu', 'شادی۔'], ['Noto Naskh Arabic', 'شادی۔']],
       weights: [400, 600],
     },
   },

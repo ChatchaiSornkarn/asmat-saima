@@ -11,8 +11,8 @@ const ISO = (s) => `⁨${s}⁩`;
 
 export default {
   meta: {
-    title: 'Asmat & Saima · ولیمہ · 13 دسمبر 2026ء',
-    description: 'آپ کو Asmat & Saima کی تقریبِ ولیمہ میں بصد مسرت مدعو کیا جاتا ہے — بروز اتوار، 13 دسمبر 2026ء، گوتھنبرگ۔',
+    title: 'Asmat & Saima · شادی · 13 دسمبر 2026ء',
+    description: 'آپ کو Asmat & Saima کی تقریبِ شادی میں بصد مسرت مدعو کیا جاتا ہے — بروز اتوار، 13 دسمبر 2026ء، گوتھنبرگ۔',
   },
 
   switcher: {
@@ -28,7 +28,7 @@ export default {
 
   postcard: {
     invitedTo: 'آپ کو بصد مسرت مدعو کیا جاتا ہے',
-    walima: 'تقریبِ ولیمہ',
+    wedding: 'تقریبِ شادی',
     of: 'مابین',
     date: 'بروز اتوار، 13 دسمبر 2026ء',
     time: 'بوقت {time}',
@@ -51,8 +51,8 @@ export default {
     calendarGoogle: 'Google Calendar',
     calendarGoogleSub: 'نئے ٹیب میں کھلے گا',
     close: 'بند کریں',
-    eventTitle: 'Asmat & Saima کا ولیمہ',
-    eventDetails: 'آپ کو Asmat & Saima کی تقریبِ ولیمہ میں بصد مسرت مدعو کیا جاتا ہے۔ ہم آپ کے ساتھ یہ خوشی منانے کے منتظر ہیں۔',
+    eventTitle: 'Asmat & Saima کی شادی',
+    eventDetails: 'آپ کو Asmat & Saima کی تقریبِ شادی میں بصد مسرت مدعو کیا جاتا ہے۔ ہم آپ کے ساتھ یہ خوشی منانے کے منتظر ہیں۔',
     allDay: 'سارا دن',
   },
 
