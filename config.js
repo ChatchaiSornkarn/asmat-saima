@@ -21,7 +21,7 @@ export default {
   // Event date, and start/end time in local Göteborg time ('HH:MM').
   // eventStart null = all-day calendar entry (Q21).
   eventDate: '2026-12-13',
-  eventStart: null,          // e.g. '14:00'
+  eventStart: '16:00',       // guests are invited from 16:00
   eventEnd: null,            // e.g. '20:00' (defaults to start + 4h)
   timeZone: 'Europe/Stockholm',
 
