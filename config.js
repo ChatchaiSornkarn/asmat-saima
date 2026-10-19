@@ -12,7 +12,9 @@ export default {
   // timeZone (Europe/Stockholm). null = line hidden (Q17).
   rsvpDeadline: '2026-11-06',
 
-  // Public "N guests from M families" line appears once N reaches this (Q16).
+  // Public "Already coming · N guests from M families" line. false = never shown (or fetched).
+  showGuestCount: false,
+  // When shown, the line appears once N reaches this (Q16).
   guestCountThreshold: 10,
 
   // Largest Party one RSVP may register, Main guest included (Q25).

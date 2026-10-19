@@ -1,9 +1,10 @@
 // Public guest count — "N guests from M families" (Q13, Q16). Aggregates only; hidden below the
-// threshold and whenever the request fails.
+// threshold, whenever the request fails, and always when config.showGuestCount is false.
 import { t, formatNumber } from '../i18n/index.js';
 import { h } from './dom.js';
 
 export function createCount({ api, config }) {
+  const enabled = config.showGuestCount !== false;
   const threshold = Number.isFinite(Number(config.guestCountThreshold)) ? Number(config.guestCountThreshold) : 10;
   const line = h('span', { class: 'rsvp-count__line' });
   const el = h('p', { class: 'rsvp-count', hidden: true },
@@ -12,7 +13,7 @@ export function createCount({ api, config }) {
   let seq = 0;
 
   function render() {
-    const show = !!data && data.guests >= threshold && data.households > 0;
+    const show = enabled && !!data && data.guests >= threshold && data.households > 0;
     el.hidden = !show;
     if (!show) return;
     line.textContent = t('rsvp.count', {
@@ -23,6 +24,7 @@ export function createCount({ api, config }) {
   }
 
   async function refresh() {
+    if (!enabled) return;
     const my = ++seq;
     let res;
     try { res = await api.count(); } catch { res = null; }
