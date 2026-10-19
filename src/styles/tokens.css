@@ -77,7 +77,8 @@
   /* Z layers */
   --z-content: 1; --z-sticky: 50; --z-switcher: 900; --z-opening: 1000; --z-toast: 1100;
 
-  color-scheme: light;
+  /* "only" opts out of browser-forced dark modes (Chrome auto-dark, Samsung Internet) that invert the card */
+  color-scheme: only light;
 }
 
 /* Script-specific font stacks (fonts load lazily; see src/i18n/index.js) */
