@@ -4,7 +4,7 @@ import { t, formatNumber } from '../i18n/index.js';
 import { h } from './dom.js';
 
 export function createCount({ api, config }) {
-  const enabled = config.showGuestCount !== false;
+  const enabled = config.showGuestCount === true;   // off unless switched on, even with a stale cached config.js
   const threshold = Number.isFinite(Number(config.guestCountThreshold)) ? Number(config.guestCountThreshold) : 10;
   const line = h('span', { class: 'rsvp-count__line' });
   const el = h('p', { class: 'rsvp-count', hidden: true },
