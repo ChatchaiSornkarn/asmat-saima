@@ -177,8 +177,7 @@ placement are listed in [`assets/art/README.md`](assets/art/README.md). To recre
 
 The Swedish, Thai and Urdu texts on the site (`src/i18n/*.js`) and in the emails (`apps-script/Strings.gs`) are
 **DRAFT** translations. A native speaker should proofread them before the link goes to guests, checking for a respectful
-wedding tone. The site calls the event a Wedding; the emails in `apps-script/` still say Walima (unchanged so the
-deployed script keeps working without a redeploy). In the Sheet, **Wedding RSVP → Email me sample confirmations** sends you every email to check.
+wedding tone. The site and the emails call the event a Wedding (Bröllop, งานมงคลสมรส, شادی). In the Sheet, **Wedding RSVP → Email me sample confirmations** sends you every email to check.
 Run `node tests/i18n/check-keys.mjs` after editing a strings file.
 
 ## More detail

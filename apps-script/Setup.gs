@@ -224,7 +224,7 @@ function setupSummarySheet_(ss, col) {
   var add = function (cells) { while (cells.length < W) cells.push(''); rows.push(cells); return rows.length; };   // → row number
   var at = {};
 
-  add(['Asmat & Saima · Walima · RSVP summary']);
+  add(['Asmat & Saima · Wedding · RSVP summary']);
   add([]);
   at.guests = add(['Guests coming', '=SUMIFS(' + ps + ', ' + st + ', "active")', '', '', '', 'Sum of party_size over active rows — the public count']);
   at.households = add(['Households (active RSVPs)', '=COUNTIFS(' + st + ', "active")', '', '', '', 'The "families" in the public count']);
