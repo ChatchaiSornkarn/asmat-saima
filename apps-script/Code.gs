@@ -29,13 +29,24 @@ var CONFIG_DEFAULTS = {
                                // (Europe/Stockholm) gets late = TRUE and a "LATE" owner-email subject (issue 14).
                                // MUST equal rsvpDeadline in ../config.js (the page's late notice uses that copy);
                                // tests/apps-script/deadline-sync.test.mjs checks this default against config.js.
-  EVENT_TIME: '',              // 'HH:MM' (24h, Göteborg time) — shown in emails once known; '' = hidden
+  EVENT_TIME: '16:00',         // 'HH:MM' (24h, Göteborg time) — shown in emails; same as eventStart in ../config.js
   VENUE_LINE1: 'Grand Plaza Bröllop & Konferens', // venue name shown to guests; the address stays in MAP_QUERY
   VENUE_LINE2: 'Göteborg',
   MAP_QUERY: 'Säve Flygplatsväg 26, 423 73 Säve, Sweden',
   SENDER_NAME: 'Asmat & Saima',
   SEND_GUEST_EMAILS: 'true',   // 'false' = don't send guests a confirmation (rows are still written)
   SEND_OWNER_EMAILS: 'true',   // 'false' = don't email you on every RSVP
+};
+
+/**
+ * Values an earlier setup() wrote to Script Properties that are now wrong (issue 13 moved the date from
+ * 6 to 13 December and showed the venue name instead of the street). Script Properties win over
+ * CONFIG_DEFAULTS, so setup() replaces exactly these values with the current default; any other
+ * value you typed yourself is left alone.
+ */
+var RETIRED_SETTINGS = {
+  EVENT_DATE: ['2026-12-06'],               // retired
+  VENUE_LINE1: ['Säve Flygplatsväg 26'],    // retired
 };
 
 var SHEET_RSVPS = 'RSVPs';

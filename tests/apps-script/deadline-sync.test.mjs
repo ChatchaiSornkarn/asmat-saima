@@ -17,6 +17,7 @@ test('Code.gs defaults match config.js: deadline, time zone and event date', () 
   assert.equal(d.RSVP_DEADLINE, config.rsvpDeadline, 'CONFIG_DEFAULTS.RSVP_DEADLINE must equal config.js rsvpDeadline');
   assert.equal(b.context.DEADLINE_TIME_ZONE, config.timeZone, 'DEADLINE_TIME_ZONE must equal config.js timeZone');
   assert.equal(d.EVENT_DATE, config.eventDate, 'CONFIG_DEFAULTS.EVENT_DATE must equal config.js eventDate');
+  assert.equal(d.EVENT_TIME, config.eventStart, 'CONFIG_DEFAULTS.EVENT_TIME must equal config.js eventStart');
   assert.equal(b.context.getConfig_().rsvpDeadline, config.rsvpDeadline);
 });
 
