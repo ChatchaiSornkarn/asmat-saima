@@ -440,7 +440,7 @@ describe('emails', () => {
       en: { subj: /Your RSVP is confirmed/, date: 'Sunday, 13 December 2026', dir: 'ltr' },
       sv: { subj: /Ditt OSA är bekräftat/, date: 'Söndag 13 december 2026', dir: 'ltr' },
       th: { subj: /ยืนยันการตอบรับ/, date: 'วันอาทิตย์ที่ 13 ธันวาคม พ.ศ. 2569', dir: 'ltr' },
-      ur: { subj: /ولیمہ/, date: 'بروز اتوار، 13 دسمبر 2026ء', dir: 'rtl' },
+      ur: { subj: /شادی/, date: 'بروز اتوار، 13 دسمبر 2026ء', dir: 'rtl' },
     };
     for (const [lang, e] of Object.entries(expect)) {
       const b = fresh();
@@ -529,6 +529,17 @@ describe('emails', () => {
       assert.ok(!/undefined|NaN|\{name\}|\{time\}/.test(m.html + m.text), ev.lang + ' ' + ev.kind + ' has no template leftovers');
       const o = b.context.renderOwnerEmail_(ev, cfg);
       assert.ok(!/undefined|NaN/.test(o.html + o.text));
+    }
+  });
+
+  test('emails call the event a Wedding in every language, never Walima', () => {
+    const name = { en: /Wedding of Asmat & Saima/, sv: /Asmat & Saimas bröllop/, th: /งานมงคลสมรส/, ur: /شادی/ };
+    for (const lang of Object.keys(name)) {
+      const b = fresh();
+      b.post(attendBody({ lang }));
+      const [g] = guestMails(b, 'a@x.se');
+      assert.match(g.subject, name[lang], lang);
+      assert.ok(!/walima|ولیم|วะลีมะฮ์/i.test(g.subject + g.body + g.htmlBody), lang + ' has no Walima');
     }
   });
 
