@@ -74,6 +74,7 @@ test('deadline: no or bad date → line hidden; unknown zone falls back to Stock
   assert.equal(isOpen('2026-11-06', 'Not/AZone', new Date('2026-11-06T22:30:00Z')), true);
 });
 
+// Lines marked "retired" may name the old date on purpose: setup() replaces it in Script Properties (RETIRED_SETTINGS).
 test('repo: no old date (2026-12-06 / 6 December) left in the site, script or tests', async () => {
   const OLD = [/2026-12-06/, /20261206/, /\b6 December\b/i, /\b6 ธันวาคม/, /\b6 دسمبر/, /Date\.UTC\(2026, 11, 6\b/, /December 6\b/i, /[๖۶٦]\s*(ธันวาคม|دسمبر)/];
   const skip = new Set(['node_modules', '__pycache__', '.git']);
@@ -85,7 +86,7 @@ test('repo: no old date (2026-12-06 / 6 December) left in the site, script or te
       const p = path.join(dir, e.name);
       if (e.isDirectory()) { await walk(p); continue; }
       if (p === self || !/\.(js|mjs|gs|html|md|py|css|json|svg)$/.test(e.name)) continue;
-      const text = await readFile(p, 'utf8');
+      const text = (await readFile(p, 'utf8')).split('\n').filter((line) => !/retired/i.test(line)).join('\n');
       for (const re of OLD) if (re.test(text)) hits.push(`${path.relative(root, p)} ~ ${re}`);
     }
   }

@@ -110,9 +110,9 @@ Changes take effect immediately (no redeploy needed).
 | `OWNER_EMAIL` | your account | Who gets the RSVP notifications. Several: comma-separated. Also the Reply-To on guest emails. |
 | `MAX_PARTY` | `20` | Largest party per RSVP, main guest included. Keep in sync with `maxPartySize` in `config.js`. |
 | `SITE_URL` | `https://chatchaisornkarn.github.io/asmat-saima/` | Link in the emails (`?lang=xx` is added, plus `&side=asmat|saima` from the Party's row so a guest who replies again keeps their side). |
-| `EVENT_DATE` | `2026-12-13` | Date shown in the emails (written out per language). `setup()` never overwrites a property, so if an earlier `setup()` stored the old date, change it to `2026-12-13` in Script Properties. |
+| `EVENT_DATE` | `2026-12-13` | Date shown in the emails (written out per language). `setup()` keeps a date you typed, but replaces the old date an earlier `setup()` stored (see *Emails show the wrong date or venue* below). |
 | `RSVP_DEADLINE` | `2026-11-06` | Reply-by date, `YYYY-MM-DD`. A "We're coming" reply after the **end of that day (Göteborg time)** is still saved, but gets `late = TRUE` and your notification subject starts with **LATE**. **Must equal `rsvpDeadline` in `config.js`** — the site's late notice uses that copy. A sheet set up before this setting existed: run `setup` again (it adds `RSVP_DEADLINE` and the `late` column) and check the value with *Show settings*. |
-| `EVENT_TIME` | *(empty)* | `HH:MM`, e.g. `14:00`. Shown in emails once set. |
+| `EVENT_TIME` | `16:00` | `HH:MM`, shown in the emails. Keep it equal to `eventStart` in `config.js`. |
 | `VENUE_LINE1` / `VENUE_LINE2` | `Grand Plaza Bröllop & Konferens` / `Göteborg` | Venue name and city in the emails (the street address is only in `MAP_QUERY`). |
 | `MAP_QUERY` | `Säve Flygplatsväg 26, 423 73 Säve, Sweden` | Google Maps search for the map link. |
 | `SENDER_NAME` | `Asmat & Saima` | Sender name on the emails. |
@@ -120,6 +120,17 @@ Changes take effect immediately (no redeploy needed).
 | `SEND_OWNER_EMAILS` | `true` | `false` = no notification to you per RSVP. |
 
 **Wedding RSVP → Show settings** shows the values in effect and how many emails you have left today.
+
+### Emails show the wrong date or venue
+
+Script Properties win over the defaults in the code. A sheet set up before the date moved still has
+`EVENT_DATE = 2026-12-06` and `VENUE_LINE1 = Säve Flygplatsväg 26` (retired values), so confirmations say *Sunday, 6 December 2026*. To fix it:
+
+1. Paste the updated `.gs` files into the Apps Script editor and **Deploy → Manage deployments → Edit → New version**.
+2. In the Sheet: **Wedding RSVP → Set up / repair the tabs**. The dialog lists *Outdated settings replaced* (retired values).
+3. **Wedding RSVP → Show settings** should now say `EVENT_DATE: 2026-12-13`, `EVENT_TIME: 16:00`, venue `Grand Plaza Bröllop & Konferens`.
+
+Or change the properties by hand in Project Settings → Script Properties — that takes effect at once, without a redeploy.
 
 ## How replies are recorded (row meanings)
 

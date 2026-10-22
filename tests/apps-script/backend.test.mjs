@@ -43,6 +43,22 @@ describe('setup()', () => {
     assert.equal(b.properties.get('SITE_URL'), 'https://example.org/x/');
   });
 
+  test('replaces the date and venue an earlier setup() stored before issue 13 (retired values)', () => {
+    const b = createBackend({ props: { EVENT_DATE: '2026-12-06', VENUE_LINE1: 'Säve Flygplatsväg 26', MAX_PARTY: '8' } }); // retired values
+    b.setup();
+    assert.equal(b.properties.get('EVENT_DATE'), '2026-12-13');
+    assert.equal(b.properties.get('VENUE_LINE1'), 'Grand Plaza Bröllop & Konferens');
+    assert.equal(b.properties.get('MAX_PARTY'), '8', 'other edits stay');
+    b.mails.length = 0;
+    b.post(attendBody());
+    const body = guestMails(b, 'a@x.se')[0].body;
+    assert.match(body, /13 December 2026/);
+    assert.ok(!/6 December/.test(body), 'retired date gone');
+    const moved = createBackend({ props: { EVENT_DATE: '2027-01-09' } });
+    moved.setup();
+    assert.equal(moved.properties.get('EVENT_DATE'), '2027-01-09', 'a date you chose is kept');
+  });
+
   test('is idempotent and never touches RSVP rows', () => {
     const b = fresh();
     b.post(attendBody({ members: ['Sara Khan'] }));
@@ -514,6 +530,12 @@ describe('emails', () => {
       const o = b.context.renderOwnerEmail_(ev, cfg);
       assert.ok(!/undefined|NaN/.test(o.html + o.text));
     }
+  });
+
+  test('emails show the 16:00 start by default', () => {
+    const b = fresh();
+    b.post(attendBody());
+    assert.match(guestMails(b, 'a@x.se')[0].body, /at 16:00/);
   });
 
   test('event time appears when EVENT_TIME is set', () => {

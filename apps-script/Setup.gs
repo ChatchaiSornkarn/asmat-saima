@@ -1,6 +1,7 @@
 /**
  * setup() — run once from the Apps Script editor (and again any time to repair formatting).
- * Safe to re-run: it never deletes or changes RSVP rows, and never overwrites Script Properties you changed.
+ * Safe to re-run: it never deletes or changes RSVP rows, and never overwrites Script Properties you changed
+ * (except the outdated values listed in RETIRED_SETTINGS, which it replaces with the current default).
  */
 
 var THEME_ = {
@@ -12,12 +13,18 @@ function setup() {
   var ss = getSpreadsheet_();
   var log = [];
 
-  // 1. Settings → Script Properties (only fills in what is missing).
+  // 1. Settings → Script Properties (fills in what is missing, replaces retired values).
   var props = PropertiesService.getScriptProperties();
   var existing = props.getProperties() || {};
   var toSet = {};
+  var added = [];
+  var replaced = [];
   Object.keys(CONFIG_DEFAULTS).forEach(function (k) {
-    if (existing[k] === undefined || existing[k] === null || String(existing[k]).trim() === '') {
+    var value = existing[k] === undefined || existing[k] === null ? '' : String(existing[k]).trim();
+    if ((RETIRED_SETTINGS[k] || []).indexOf(value) !== -1) {
+      toSet[k] = CONFIG_DEFAULTS[k];
+      replaced.push(k + ' ' + value + ' → ' + CONFIG_DEFAULTS[k]);
+    } else if (value === '') {
       if (k === 'OWNER_EMAIL') {
         var me = '';
         try { me = Session.getEffectiveUser().getEmail(); } catch (err) { me = ''; }
@@ -25,10 +32,12 @@ function setup() {
       } else if (CONFIG_DEFAULTS[k] !== '') {
         toSet[k] = CONFIG_DEFAULTS[k];
       }
+      if (toSet[k]) added.push(k);
     }
   });
   if (Object.keys(toSet).length) props.setProperties(toSet, false);
-  log.push('Script Properties: ' + (Object.keys(toSet).length ? 'added ' + Object.keys(toSet).join(', ') : 'already complete'));
+  log.push('Script Properties: ' + (added.length ? 'added ' + added.join(', ') : 'already complete'));
+  if (replaced.length) log.push('Outdated settings replaced: ' + replaced.join('; '));
 
   // 2. Tabs.
   var rsvps = setupRsvpsSheet_(ss);
